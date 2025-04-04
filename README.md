@@ -3,8 +3,10 @@
 
 This repository, developed by Stefan Pietrusky, is based on the article published at [Towards Data Science](LINK). In this article, I describe the functionality of an enhanced version (V2) of the FACTS application. The first version has already been tested and provided important results for improvement. The testing of the first version of FACTS provides concrete insights into the future of education in the age of AI [[1]](https://arxiv.org/abs/2412.07794). The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are yet to be published. The current version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. This is an open source project for educational and research purposes.
 
-## IEC Structure
-![IEC V1.5 Structure and mode of operation IEC V1.5 (Image by author)](images/IECV1.5_APP_STRUCTURE.png)
+## FACTS Structure
+The illustration shows the functional principle of the FACTS (V1.5) app. Three separate Python scripts had to be executed for a complete run.
+
+![FACTS V1.5 Structure and mode of operation (Image by author)](images/FACTSV2_APP_STRUCTURE.png)
 
 ## FACTS working principle
 Below is a short GIF showing the structure and function of the app.
