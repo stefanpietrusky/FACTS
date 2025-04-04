@@ -1,0 +1,12 @@
+FROM llama3.1
+
+SYSTEM Please strictly follow the instructions of the transmitted context.
+
+PARAMETER temperature 0
+PARAMETER seed 42
+PARAMETER top_p 1
+PARAMETER stop "<|start_header_id|>"
+PARAMETER stop "<|end_header_id|>"
+PARAMETER stop "<|eot_id|>"
+PARAMETER stop "<|reserved_special_token>"
+
