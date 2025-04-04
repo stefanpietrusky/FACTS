@@ -1,0 +1,14 @@
+Flask==2.2.5
+requests==2.28.2
+selenium==4.10.0
+beautifulsoup4==4.12.2
+pandas==1.5.3
+nltk==3.8.1
+gensim==4.3.1
+wordcloud==1.8.2.3
+pyLDAvis==3.3.1
+numpy==1.23.5
+networkx==2.8.8
+plotly==5.14.1
+matplotlib==3.7.1
+PyMuPDF==1.23.3
