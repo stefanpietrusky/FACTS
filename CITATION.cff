@@ -1,0 +1,9 @@
+cff-version: 1.2.0
+message: "If you cite this repository, please use the following reference."
+title: "FILTERING AND ANALYSIS OF CONTENT IN TEXTUAL SOURCES (FACTS) V2"
+authors:
+  - family-names: "Pietrusky"
+    given-names: "Stefan"
+    orcid: "https://orcid.org/0009-0008-9739-5542"
+version: "1.0.0"
+date-released: "2025-04-04"
