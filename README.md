@@ -40,6 +40,6 @@ ollama create llama3.1p2 -f PATH\modelfile.txt
 python app.py
 ```
 ## References
-[1] Pietrusky, S. (2025). FACTS V2: Filtering and Analysis of Content in Textual Sources. New ways to automatically answer scientific questions based on evidence. Towards Data Science
+[1] Pietrusky, S. (2025). FACTS V2: Filtering and Analysis of Content in Textual Sources. New ways to automatically answer scientific questions based on evidence. Data Science Collective
 
 [2] Pietrusky, S. (2024). Automatic answering of scientific questions using the FACTS-V1 framework: New methods in research to increase efficiency through the use of generative AI. ARXIV CS.DL 
