@@ -3,7 +3,7 @@
 
 This repository, developed by Stefan Pietrusky, is based on the article published at Data Science Collective [[1]](https://medium.com/@stefanpietrusky/facts-v2-filtering-and-analysis-of-content-in-textual-sources-1a16cdac811b). In this article, I describe the functionality of an enhanced version (V2) of the FACTS application. The first version has already been tested and provided important results for improvement. The testing of the first version of FACTS provides concrete insights into the future of education in the age of AI [[2]](https://arxiv.org/abs/2412.07794). 
 
-The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are yet to be published. The current version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. This is an open source project for educational and research purposes.
+The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are available at peDOCS and show that FACTS provides answers to the questions posed by the congress [[3]](https://www.pedocs.de/frontdoor.php?source_opus=33063). The current version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. This is an open source project for educational and research purposes.
 
 ## FACTS Structure
 The illustration shows the functional principle of the FACTS (V1.5) app. Three separate Python scripts had to be executed for a complete run.
