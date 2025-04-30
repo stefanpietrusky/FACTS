@@ -43,3 +43,5 @@ python app.py
 [1] Pietrusky, S. (2025). FACTS V2: Filtering and Analysis of Content in Textual Sources. New ways to automatically answer scientific questions based on evidence. Data Science Collective
 
 [2] Pietrusky, S. (2024). Automatic answering of scientific questions using the FACTS-V1 framework: New methods in research to increase efficiency through the use of generative AI. ARXIV CS.DL 
+
+[3] Pietrusky, S (2025). Changing school practice. Can artificial intelligence help provide answers to educational research questions? 6. IGSP Congress. peDOCS
