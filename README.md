@@ -1,3 +1,5 @@
+![](images/FACTS_Logo.png)
+
 # FACTS V2 APP
 ## Filtering and Analysis of Content in Textual Sources
 
