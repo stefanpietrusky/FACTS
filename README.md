@@ -7,6 +7,8 @@ This repository, developed by Stefan Pietrusky, is based on the article publishe
 
 The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are available at peDOCS and show that FACTS provides answers to the questions posed by the congress [[3]](https://www.pedocs.de/frontdoor.php?source_opus=33063). The current version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. This is an open source project for educational and research purposes.
 
+We are currently working on version 2.5, which will integrate Cytoscape and adapt the design.
+
 ## FACTS Structure
 The illustration shows the functional principle of the FACTS (V1.5) app. Three separate Python scripts had to be executed for a complete run.
 
