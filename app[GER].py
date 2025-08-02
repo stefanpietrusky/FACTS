@@ -57,7 +57,7 @@ import math
 matplotlib.use("Agg")
 
 # ---------------------------
-# Logging & Configuration
+# Logging & Konfiguration
 # ---------------------------
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
@@ -72,29 +72,29 @@ download_progress = {}
 analysis_progress = {}
 sediment_progress = {}
 
-# Base folder for downloads (data acquisition)
+# Basisordner für Downloads (Datenbeschaffung)
 DOWNLOAD_ROOT = os.path.join(os.getcwd(), "downloads")
 if not os.path.exists(DOWNLOAD_ROOT):
     os.makedirs(DOWNLOAD_ROOT)
 
-# Base folder for analysis results (data analysis)
+# Basisordner für Analyseergebnisse (Datenanalyse)
 DATA_ROOT = os.path.join(os.getcwd(), "data")
 if not os.path.exists(DATA_ROOT):
     os.makedirs(DATA_ROOT)
 
-# Base folder for analysis results (data analysis)
+# Basisordner für Analyseergebnisse (Datenanalyse)
 ANALYSIS_ROOT = os.path.join(os.getcwd(), "analysis")
 if not os.path.exists(ANALYSIS_ROOT):
     os.makedirs(ANALYSIS_ROOT)
 
 # ---------------------------
-# Process exclusivity
+# Prozessexklusivität
 # ---------------------------
 current_process = {"download": False, "analysis": False, "sediment": False}
 process_lock = threading.Lock()
 
 # ---------------------------
-# Constants
+# Konstanten
 # ---------------------------
 GECKO_DRIVER_PATH = (
     r"\geckodriver.exe"
@@ -102,7 +102,7 @@ GECKO_DRIVER_PATH = (
 PDF_BASE_URL = "https://files.eric.ed.gov/fulltext/"
 
 # ---------------------------
-# Functions: Data acquisition
+# Funktionen: Datenbeschaffung
 # ---------------------------
 
 def is_pdf_file(filepath):
@@ -129,7 +129,7 @@ def resolve_eric_pdf_url(detail_url, session=None):
         resp = session.get(detail_url, timeout=30, headers=headers)
         resp.raise_for_status()
     except Exception as e:
-        logging.warning(f"Detail page not available: {e}")
+        logging.warning(f"Detailseite nicht erreichbar: {e}")
         return None
 
     html = resp.text
@@ -162,7 +162,7 @@ def resolve_eric_pdf_url(detail_url, session=None):
     if m:
         ej_id = m.group(1)
         direct_pdf = f"https://files.eric.ed.gov/fulltext/{ej_id}.pdf"
-        logging.info(f"Try Direct PDF for EJ: {direct_pdf}")
+        logging.info(f"Versuche Direkt‑PDF für EJ: {direct_pdf}")
         try:
             r = session.head(direct_pdf, timeout=10, headers=headers)
             if r.status_code == 200:
@@ -170,12 +170,12 @@ def resolve_eric_pdf_url(detail_url, session=None):
         except Exception:
             pass
 
-    logging.warning(f"NO PDF LINK on detail page: {detail_url}")
+    logging.warning(f"KEIN PDF‑LINK auf Detailseite: {detail_url}")
     return None
 
 def download_pdf_generic(pdf_url, download_folder, file_name, session=None, progress_data=None):
     if not pdf_url:
-        logging.warning("download_pdf_generic: No URL received.")
+        logging.warning("download_pdf_generic: Keine URL erhalten.")
         return None
 
     if pdf_url.startswith("http://files.eric.ed.gov/"):
@@ -185,22 +185,22 @@ def download_pdf_generic(pdf_url, download_folder, file_name, session=None, prog
     headers = {
         "User-Agent": (
             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
+            "AppleWebKit/537.36 (KHTML, wie Gecko) "
             "Chrome/125.0.0.0 Safari/537.36"
         ),
         "Referer": "https://eric.ed.gov/",
     }
 
     pdf_path = os.path.join(download_folder, file_name)
-    logging.info(f"Start download: {pdf_url} → {pdf_path}")
+    logging.info(f"Starte Download: {pdf_url} → {pdf_path}")
 
     try:
         timeout = (10, 60)
         r = session.get(pdf_url, headers=headers, timeout=timeout, stream=True)
-        logging.info(f"Response status code: {r.status_code}")
+        logging.info(f"Antwort Statuscode: {r.status_code}")
         r.raise_for_status()
     except Exception as e:
-        logging.error(f"Error retrieving PDF: {e}")
+        logging.error(f"Fehler beim Abrufen der PDF: {e}")
         return None
 
     content_length = r.headers.get("Content-Length")
@@ -212,7 +212,7 @@ def download_pdf_generic(pdf_url, download_folder, file_name, session=None, prog
         with open(pdf_path, "wb") as f:
             for i, chunk in enumerate(r.iter_content(chunk_size=16_384), start=1):
                 if progress_data and progress_data.get("abort"):
-                    logging.info("Interruption detected during download, abort.")
+                    logging.info("Abbruch erkannt während Download, breche ab.")
                     try:
                         f.close()
                         os.remove(pdf_path)
@@ -225,42 +225,42 @@ def download_pdf_generic(pdf_url, download_folder, file_name, session=None, prog
                 total_written += len(chunk)
                 if i % 10 == 0:
                     logging.info(
-                        f"  ... {total_written} bytes written (after {i} chunks)"
+                        f"  ... {total_written} bytes geschrieben (nach {i} Chunks)"
                     )
             f.flush()
             os.fsync(f.fileno())
 
         logging.info(
-            f"Finish writing: Total {total_written} bytes in '{pdf_path}'"
+            f"Fertig schreiben: Insgesamt {total_written} bytes in '{pdf_path}'"
         )
         if total_written > 0 and os.path.exists(pdf_path):
             if is_pdf_file(pdf_path):
-                logging.info("The file is a PDF and has been saved correctly.")
+                logging.info("Datei ist eine PDF und wurde korrekt gespeichert.")
                 return pdf_url
             else:
                 bad_path = pdf_path + ".html"
                 os.rename(pdf_path, bad_path)
                 with open(bad_path, "r", encoding="utf-8", errors="ignore") as f:
                     head = f.read(500)
-                    logging.error(f"No PDF received. The first 500 characters:\n{head}")
+                    logging.error(f"Kein PDF erhalten. Die ersten 500 Zeichen:\n{head}")
                 return None
         else:
-            logging.error("File exists but is empty!")
+            logging.error("Datei existiert, ist aber leer!")
             return None
 
     except Exception as e:
-        logging.error(f"Error writing file:{e}")
+        logging.error(f"Fehler beim Schreiben der Datei: {e}")
         return None
 
 def generate_apa_citation(metadata, database):
     authors = metadata.get("authors", [])
     if isinstance(authors, list):
-        author_str = ", ".join(authors) if authors else "Unknown author"
+        author_str = ", ".join(authors) if authors else "Unbekannter Autor"
     else:
-        author_str = authors or "Unknown author"
+        author_str = authors or "Unbekannter Autor"
     year = metadata.get("year", "o.J.")
-    title = metadata.get("title", "No title")
-    citation = f"{author_str} ({year}). {title}. {database}. Retrieved from {metadata.get('url', 'n/a')}"
+    title = metadata.get("title", "Kein Titel")
+    citation = f"{author_str} ({year}). {title}. {database}. Abgerufen von {metadata.get('url', 'n/a')}"
     return citation
 
 def download_pdf_eric(
@@ -289,13 +289,13 @@ def download_pdf_eric(
 
     for attempt in range(max_retries):
         try:
-            logging.info(f"Attempt {attempt+1}: Download PDF: {pdf_url}")
+            logging.info(f"Versuch {attempt+1}: Lade PDF herunter: {pdf_url}")
             response = session.get(pdf_url, timeout=30, headers=headers)
             response.raise_for_status()
 
             if response.headers.get("Content-Type", "").lower() != "application/pdf":
                 logging.warning(
-                    f"No PDF response ({response.headers.get('Content-Type')}), new attempt in 3 seconds..."
+                    f"Antwort kein PDF ({response.headers.get('Content-Type')}), neuer Versuch in 3 Sekunden..."
                 )
                 time.sleep(3)
                 continue
@@ -304,22 +304,22 @@ def download_pdf_eric(
                 f.write(response.content)
 
             if is_pdf_file(pdf_filename):
-                logging.info(f"PDF successfully saved: {pdf_filename}")
+                logging.info(f"PDF erfolgreich gespeichert: {pdf_filename}")
                 return pdf_url
             else:
                 logging.warning(
-                    "File is not a valid PDF, new attempt in 3 seconds..."
+                    "Datei ist keine gültige PDF, neuer Versuch in 3 Sekunden..."
                 )
                 os.rename(pdf_filename, pdf_filename + ".html")
                 time.sleep(3)
                 continue
 
         except requests.exceptions.RequestException as e:
-            logging.error(f"Download error: {e}, new attempt in 3 seconds...")
+            logging.error(f"Download-Fehler: {e}, neuer Versuch in 3 Sekunden...")
             time.sleep(3)
 
     logging.error(
-        f"All {max_retries} Attempts failed, PDF could not be downloaded."
+        f"Alle {max_retries} Versuche fehlgeschlagen, PDF konnte nicht heruntergeladen werden."
     )
     return None
 
@@ -327,11 +327,11 @@ def extract_paper_data_eric(paper_div, base_url):
     raw_id = paper_div.get("id", "")
     paper_id = re.sub(r"^r_", "", raw_id)
     if not paper_id:
-        logging.warning("No valid paper ID found, skip.")
+        logging.warning("Keine gültige Paper-ID gefunden, überspringe.")
         return None
 
     title_elem = paper_div.find("div", class_="r_t").find("a")
-    title = title_elem.text.strip() if title_elem else "Unknown title"
+    title = title_elem.text.strip() if title_elem else "Unbekannter Titel"
     href = title_elem["href"] if title_elem and title_elem.has_attr("href") else None
 
     if href and href.startswith("/"):
@@ -375,8 +375,8 @@ def download_eric_selenium(
         start_url = f"https://eric.ed.gov/?q={quote(query)}&ft=on"
         driver.get(start_url)
     except (TimeoutException, WebDriverException) as e:
-        logging.error("Eric homepage could not be loaded: %s", e)
-        progress_data.update(status="error", error="Eric homepage not reachable")
+        logging.error("Eric-Startseite konnte nicht geladen werden: %s", e)
+        progress_data.update(status="error", error="Eric-Startseite nicht erreichbar")
         driver.quit()
         return
 
@@ -385,13 +385,13 @@ def download_eric_selenium(
             EC.presence_of_element_located((By.CLASS_NAME, "r_i"))
         )
     except TimeoutException:
-        logging.error("Search results did not load (timeout).")
-        progress_data.update(status="error", error="Results unavailable")
+        logging.error("Suchergebnisse nicht geladen (Timeout).")
+        progress_data.update(status="error", error="Ergebnisse nicht verfügbar")
         driver.quit()
         return
 
     os.makedirs(download_folder, exist_ok=True)
-    references_file = os.path.join(download_folder, "sources.txt")
+    references_file = os.path.join(download_folder, "quellenangaben.txt")
     downloaded_papers = 0
     eric_index = 1
     session = requests.Session()
@@ -400,7 +400,7 @@ def download_eric_selenium(
         while downloaded_papers < num_papers:
             if progress_data.get("abort"):
                 progress_data["status"] = "aborted"
-                logging.info("ERIC download aborted by user.")
+                logging.info("ERIC-Download abgebrochen vom Nutzer.")
                 driver.quit()
                 with process_lock:
                     current_process = None
@@ -409,7 +409,7 @@ def download_eric_selenium(
             soup = BeautifulSoup(driver.page_source, "html.parser")
             paper_divs = soup.find_all("div", class_="r_i")
             if not paper_divs:
-                logging.info("No more hits on this page.")
+                logging.info("Keine Treffer mehr auf dieser Seite.")
                 break
 
             for paper in paper_divs:
@@ -418,12 +418,12 @@ def download_eric_selenium(
 
                 data = extract_paper_data_eric(paper, "https://eric.ed.gov/")
                 if not data:
-                    logging.debug("No valid metadata for a paper, skipping.")
+                    logging.debug("Keine validen Metadaten für ein Paper, überspringe.")
                     continue
 
                 if data["pub_year"] != str(target_year):
                     logging.info(
-                        f"Skipping paper '{data.get('title', 'Unknown')}' due to year mismatch: found {data.get('pub_year')} vs requested {target_year}"
+                        f"Überspringe Paper '{data.get('title', 'Unbekannt')}' wegen Jahr-Mismatch: gefunden {data.get('pub_year')} vs gesucht {target_year}"
                     )
                     continue
 
@@ -442,7 +442,7 @@ def download_eric_selenium(
                     pdf_url = pdf_url.replace("http://", "https://", 1)
 
                 if not pdf_url:
-                    logging.info(f"No PDF link found for '{data.get('title', 'Unknown')}', skipping.")
+                    logging.info(f"Kein PDF-Link gefunden für '{data.get('title', 'Unbekannt')}', überspringe.")
                     continue
 
                 saved = download_pdf_generic(
@@ -453,7 +453,7 @@ def download_eric_selenium(
                     progress_data=progress_data,
                 )
                 if not saved:
-                    logging.warning(f"PDF for '{data.get('title', 'Unknown')}' could not be saved.")
+                    logging.warning(f"PDF für '{data.get('title', 'Unbekannt')}' konnte nicht gespeichert werden.")
                     continue
 
                 citation = generate_apa_citation(
@@ -477,7 +477,7 @@ def download_eric_selenium(
                 next_elem = None
                 for candidate in driver.find_elements(By.TAG_NAME, "a"):
                     txt = candidate.text.strip()
-                    if "next page" in txt.lower() or txt.lower().startswith("next") or ("»" in txt and "next" in txt.lower()):
+                    if "next page" in txt.lower() or txt.lower().startswith("next") or "»" in txt and "next" in txt.lower():
                         next_elem = candidate
                         break
 
@@ -489,22 +489,21 @@ def download_eric_selenium(
                             break
 
                 if next_elem:
-                    logging.info(f"Navigation: clicking next page via link text '{next_elem.text.strip()}'.")
+                    logging.info(f"Navigation: Klicke auf nächste Seite über Linktext '{next_elem.text.strip()}'.")
                     try:
                         next_elem.click()
                         moved_next = True
                     except Exception:
                         from selenium.webdriver.common.action_chains import ActionChains
-
                         ActionChains(driver).move_to_element(next_elem).click(next_elem).perform()
                         moved_next = True
                 else:
-                    logging.info("No further page found (no next link).")
+                    logging.info("Keine weitere Seite gefunden (kein Next-Link).")
             except Exception as e:
-                logging.warning(f"Error finding/clicking the next page: {e}")
+                logging.warning(f"Fehler beim Finden/Klicken der nächsten Seite: {e}")
 
             if not moved_next:
-                logging.info("Stopping pagination: no next page reachable.")
+                logging.info("Abbruch der Pagination: keine nächste Seite erreichbar.")
                 break
 
             try:
@@ -513,13 +512,13 @@ def download_eric_selenium(
                 )
                 time.sleep(1)
             except TimeoutException:
-                logging.info("Timeout while loading the next results page.")
+                logging.info("Timeout beim Laden der nächsten Ergebnisseite.")
                 break
 
-        logging.info("ERIC scraping completed.")
+        logging.info("ERIC-Scraping abgeschlossen.")
         if downloaded_papers == 0:
             progress_data["status"] = "error"
-            progress_data["error"] = f"No hits found for year {target_year} or no valid PDFs downloaded."
+            progress_data["error"] = f"Keine Treffer für Jahr {target_year} gefunden oder keine gültigen PDFs heruntergeladen."
         else:
             if progress_data.get("status") != "error":
                 progress_data["status"] = "completed"
@@ -542,14 +541,14 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
         driver.get(url)
     except (TimeoutException, WebDriverException) as e:
         logging.error(
-            "The peDOCs homepage could not be loaded "
-            "(timeout or server not responding): %s",
+            "Die peDOCs-Startseite konnte nicht geladen werden "
+            "(Timeout oder Server reagiert nicht): %s",
             e,
         )
         progress_data["status"] = "error"
         progress_data["error"] = (
-            "The peDOCs homepage could not be loaded "
-            "(timeout or server unreachable)."
+            "Die peDOCs-Startseite konnte nicht geladen werden "
+            "(Timeout oder Server nicht erreichbar)."
         )
         driver.quit()
         return
@@ -559,9 +558,9 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
             EC.presence_of_element_located((By.ID, "volltextsuche"))
         )
     except TimeoutException:
-        logging.error("Search field not found (timeout).")
+        logging.error("Suchfeld wurde nicht gefunden (Timeout).")
         progress_data["status"] = "error"
-        progress_data["error"] = "Search field not found (timeout)."
+        progress_data["error"] = "Suchfeld nicht gefunden (Timeout)."
         driver.quit()
         return
 
@@ -574,14 +573,14 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
             lambda d: d.find_elements(By.XPATH, "//a[contains(@href, 'frontdoor.php')]")
         )
     except TimeoutException:
-        logging.error("Results did not load (timeout).")
+        logging.error("Ergebnisse wurden nicht geladen (Timeout).")
         progress_data["status"] = "error"
-        progress_data["error"] = "Results could not be loaded (timeout)."
+        progress_data["error"] = "Ergebnisse konnten nicht geladen werden (Timeout)."
         driver.quit()
         return
 
     os.makedirs(download_folder, exist_ok=True)
-    references_file = os.path.join(download_folder, "source_references.txt")
+    references_file = os.path.join(download_folder, "quellenangaben.txt")
 
     paper_index = 1
     total_downloaded = 0
@@ -590,7 +589,7 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
         while total_downloaded < num_papers:
             if progress_data.get("abort"):
                 progress_data["status"] = "aborted"
-                logging.info("peDOCs download aborted by user.")
+                logging.info("peDOCs-Download abgebrochen vom Nutzer.")
                 driver.quit()
                 with process_lock:
                     current_process = None
@@ -614,7 +613,7 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
                     paper_response = requests.get(paper_url, timeout=30)
                     paper_response.raise_for_status()
                 except Exception as e:
-                    logging.error(f"Error loading article {paper_url}: {e}")
+                    logging.error(f"Fehler beim Laden des Artikels {paper_url}: {e}")
                     continue
 
                 paper_soup = BeautifulSoup(paper_response.content, "html.parser")
@@ -625,11 +624,11 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
                     continue
 
                 title_elem = paper_soup.find("h1") or paper_soup.find("title")
-                title = title_elem.text.strip() if title_elem else "No Title"
+                title = title_elem.text.strip() if title_elem else "Kein Titel"
 
                 pdf_link = paper_soup.find("a", class_="a5-book-list-item-fulltext")
                 if not pdf_link:
-                    logging.info(f"No PDF link for {paper_url}")
+                    logging.info(f"Kein PDF-Link für {paper_url}")
                     continue
 
                 pdf_url = pdf_link["href"]
@@ -646,14 +645,14 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
                         for chunk in r.iter_content(chunk_size=8192):
                             f.write(chunk)
                 except Exception as e:
-                    logging.error(f"PDF download error for {pdf_url}: {e}")
+                    logging.error(f"PDF-Download Fehler für {pdf_url}: {e}")
                     continue
 
                 ref_row = paper_soup.find("th", scope="row", string="Quellenangabe")
                 reference = (
                     ref_row.find_next("td").text.strip()
                     if ref_row
-                    else "No source reference"
+                    else "Keine Quellenangabe"
                 )
                 with open(references_file, "a", encoding="utf-8") as f:
                     f.write(f"{paper_index}. {reference}\n\n")
@@ -682,11 +681,11 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
                     )
                 )
             except (TimeoutException, WebDriverException) as e:
-                logging.error("Next page could not be loaded: %s", e)
+                logging.error("Nächste Seite konnte nicht geladen werden: %s", e)
                 progress_data["status"] = "error"
                 progress_data["error"] = (
-                    "The next results page could not be loaded "
-                    "(timeout or server unreachable)."
+                    "Die nächste Ergebnisseite konnte nicht geladen werden "
+                    "(Timeout oder Server nicht erreichbar)."
                 )
                 break
 
@@ -694,7 +693,7 @@ def download_pedocs(query, year, num_papers, download_folder, progress_data):
             progress_data["status"] = "completed"
 
     except Exception as e:
-        logging.error(f"Unknown error: {e}")
+        logging.error(f"Unbekannter Fehler: {e}")
         progress_data["status"] = "error"
         progress_data["error"] = str(e)
 
@@ -720,23 +719,23 @@ def download_arxiv(query, year, num_papers, download_folder, progress_data):
         response = requests.get(base_url, params=params, timeout=30)
         response.raise_for_status()
     except requests.exceptions.Timeout:
-        logging.error("The arXiv API could not be reached (timeout).")
+        logging.error("Die arXiv-API konnte nicht erreicht werden (Timeout).")
         progress_data["status"] = "error"
-        progress_data["error"] = "Request to arXiv failed (timeout)."
+        progress_data["error"] = "Anfrage an arXiv fehlgeschlagen (Timeout)."
         return
     except requests.exceptions.RequestException as e:
-        logging.error(f"Error during arXiv query: {e}")
+        logging.error(f"Fehler bei der arXiv-Abfrage: {e}")
         progress_data["status"] = "error"
-        progress_data["error"] = f"Request to arXiv failed: {e}"
+        progress_data["error"] = f"Anfrage an arXiv fehlgeschlagen: {e}"
         return
 
     try:
         root = ET.fromstring(response.content)
     except ET.ParseError:
-        logging.error("Response from arXiv was invalid XML.")
+        logging.error("Antwort von arXiv war ungültiges XML.")
         progress_data["status"] = "error"
         progress_data["error"] = (
-            "Invalid response from arXiv (could not be parsed)."
+            "Ungültige Antwort von arXiv (konnte nicht geparsed werden)."
         )
         return
 
@@ -752,13 +751,13 @@ def download_arxiv(query, year, num_papers, download_folder, progress_data):
     for idx, entry in enumerate(entries[:total], start=1):
         if progress_data.get("abort"):
             progress_data["status"] = "aborted"
-            logging.info("arXiv download aborted by user.")
+            logging.info("arXiv-Download abgebrochen vom Nutzer.")
             with process_lock:
                 current_process = None
             return
 
         title_elem = entry.find("atom:title", ns)
-        title = title_elem.text.strip() if title_elem is not None else "No Title"
+        title = title_elem.text.strip() if title_elem is not None else "Kein Titel"
 
         summary_elem = entry.find("atom:summary", ns)
         summary = summary_elem.text.strip() if summary_elem is not None else ""
@@ -790,9 +789,9 @@ def download_arxiv(query, year, num_papers, download_folder, progress_data):
                     for chunk in r.iter_content(chunk_size=8192):
                         f.write(chunk)
             except requests.exceptions.Timeout:
-                logging.error(f"PDF download from {pdf_url} failed (timeout).")
+                logging.error(f"PDF-Download von {pdf_url} fehlgeschlagen (Timeout).")
             except requests.exceptions.RequestException as e:
-                logging.error(f"PDF download error for {pdf_url}: {e}")
+                logging.error(f"PDF-Download Fehler für {pdf_url}: {e}")
 
         metadata = {
             "title": title,
@@ -809,14 +808,14 @@ def download_arxiv(query, year, num_papers, download_folder, progress_data):
 
     try:
         os.makedirs(download_folder, exist_ok=True)
-        citations_file = os.path.join(download_folder, "source_references.txt")
+        citations_file = os.path.join(download_folder, "quellenangaben.txt")
         with open(citations_file, "a", encoding="utf-8") as f:
             for i, citation in enumerate(citations, start=1):
                 f.write(f"{i}. {citation}\n\n")
     except Exception as e:
-        logging.error(f"Error writing citation file: {e}")
+        logging.error(f"Fehler beim Schreiben der Zitationsdatei: {e}")
         progress_data["status"] = "error"
-        progress_data["error"] = f"Error saving citations: {e}"
+        progress_data["error"] = f"Fehler beim Speichern der Zitationen: {e}"
         return
 
     progress_data["status"] = "completed"
@@ -841,7 +840,7 @@ def download_papers_background(download_id, database, query, year, num_papers):
             download_eric_selenium(query, year, num_papers, db_folder, progress_data)
         else:
             progress_data["status"] = "error"
-            progress_data["error"] = "Unknown database."
+            progress_data["error"] = "Unbekannte Datenbank."
     except Exception as e:
         progress_data["status"] = "error"
         progress_data["error"] = str(e)
@@ -850,12 +849,12 @@ def download_papers_background(download_id, database, query, year, num_papers):
             current_process["download"] = False
 
 # ---------------------------
-# Functions: Data analysis
+# Funktionen: Datenanalyse 
 # ---------------------------
 @app.route("/upload_pdfs", methods=["POST"])
 def upload_pdfs():
     if "files" not in request.files:
-        return jsonify({"error": "No files found."}), 400
+        return jsonify({"error": "Keine Dateien gefunden."}), 400
     files = request.files.getlist("files")
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     upload_folder = os.path.join(DOWNLOAD_ROOT, f"upload_{timestamp}")
@@ -868,7 +867,7 @@ def upload_pdfs():
             saved_files.append(file.filename)
     return jsonify(
         {
-            "message": "Files uploaded",
+            "message": "Dateien hochgeladen",
             "folder": os.path.basename(upload_folder),
             "files": saved_files,
         }
@@ -883,7 +882,7 @@ def extract_text_from_pdf(pdf_path, abort_data=None):
     try:
         doc = fitz.open(pdf_path)
     except Exception as e:
-        logging.error(f"[EXTRACT] Could not open PDF: {pdf_path} – {e}")
+        logging.error(f"[EXTRACT] Konnte PDF nicht öffnen: {pdf_path} – {e}")
         return "", 0
 
     text = ""
@@ -891,14 +890,14 @@ def extract_text_from_pdf(pdf_path, abort_data=None):
         page_count = doc.page_count
         for page_num in range(page_count):
             if abort_data and abort_data.get("abort"):
-                logging.info("[ABORT] PDF parsing aborted")
+                logging.info("[ABORT] PDF-Parsing abgebrochen")
                 break
             try:
                 page = doc.load_page(page_num)
                 text += page.get_text()
             except Exception as inner_e:
                 logging.warning(
-                    f"[EXTRACT] Error reading page {page_num} in {pdf_path}: {inner_e}"
+                    f"[EXTRACT] Fehler beim Lesen von Seite {page_num} in {pdf_path}: {inner_e}"
                 )
                 continue
     finally:
@@ -909,23 +908,14 @@ def extract_text_from_pdf(pdf_path, abort_data=None):
 
     return text, page_count
 
-def clean_text(
-    text,
-    remove_list_numbers: bool = True,
-    remove_page_headers: bool = True
-):
+def clean_text(text):
     text = unicodedata.normalize("NFKC", text)
-    text = text.replace("\u00ad", "")
-    text = re.sub(r"(\w+)-\n(\w+)", r"\1\2", text)
-    text = re.sub(r"(\w)[\--–]\s+(\w)", r"\1\2", text)
-    if remove_page_headers:
-        text = re.sub(r"(?i)\n\s*Page\s+\d+\s*\n", "\n", text)
-        text = re.sub(r"\n\s*\d+\s*\n", "\n", text)
+    text = text.replace("\u00ad", "")    
+    text = re.sub(r"(\w)[\--–]\s+(\w)", r"\1\2", text)  
+    text = re.sub(r"\nPage \d+\n|\n\d+\n", "", text)
     text = re.sub(r"\n+", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
-    if remove_list_numbers:
-        text = re.sub(r"(?<=\s|^)\d+\.\s+", "", text)
-
+    text = re.sub(r"\d+\.", "", text)
     return text
 
 def query_llm_via_cli(input_text):
@@ -942,29 +932,29 @@ def query_llm_via_cli(input_text):
         )
         stdout, stderr = process.communicate(input=f"{input_text}\n", timeout=180)
         if process.returncode != 0:
-            logging.error(f"LLM error: {stderr.strip()}")
+            logging.error(f"LLM-Fehler: {stderr.strip()}")
             return ""
         response = re.sub(r"\x1b\[.*?m", "", stdout)
-        logging.info(f"Raw LLM response: {response.strip()}")
+        logging.info(f"LLM-Rohantwort: {response.strip()}")
         return response.strip()
     except subprocess.TimeoutExpired:
         process.kill()
         return "Timeout for the model request"
     except Exception as e:
-        return f"An unexpected error occurred: {str(e)}"
+        return f"An unexpected error has occurred: {str(e)}"
 
 def validate_llm_response(response, expected_count):
-    response = re.sub(r"(?i)^Here\s+are\s+the\s+answers.*?\n", "", response).strip()
+    response = re.sub(r"(?i)^Hier\s+sind\s+die\s+Antworten.*?\n", "", response).strip()
 
     def parse_block(block_text):
         block_text = block_text.strip()
-        a = re.search(r"Answer[:\-]\s*(.+?)(?:\n|$)", block_text, flags=re.IGNORECASE)
-        e = re.search(r"Citation[:\-]\s*(.+?)(?:\n|$)", block_text, flags=re.IGNORECASE)
+        a = re.search(r"Antwort[:\-]\s*(.+?)(?:\n|$)", block_text, flags=re.IGNORECASE)
+        e = re.search(r"Beleg[:\-]\s*(.+?)(?:\n|$)", block_text, flags=re.IGNORECASE)
         ans = (a.group(1).strip() if a else "").strip()
-        ev = (e.group(1).strip() if e else "").strip()
+        ev  = (e.group(1).strip() if e else "").strip()
 
-        if ans and re.fullmatch(r"(?i)no answer!?$", ans):
-            return "NO ANSWER!", None
+        if ans and re.fullmatch(r"(?i)keine antwort!?$", ans):
+            return "KEINE ANTWORT!", None
         if not ans:
             lines = [l.strip() for l in block_text.splitlines() if l.strip()]
             if lines:
@@ -972,14 +962,14 @@ def validate_llm_response(response, expected_count):
             if len(lines) > 1 and not ev:
                 ev = lines[1]
 
-        if ans and re.fullmatch(r"(?i)no answer!?$", ans):
-            return "NO ANSWER!", None
+        if ans and re.fullmatch(r"(?i)keine antwort!?$", ans):
+            return "KEINE ANTWORT!", None
 
         if not ans:
-            return "NO ANSWER!", None
+            return "KEINE ANTWORT!", None
 
         if not ev or len(ev.split()) < 2:
-            return "NO ANSWER!", None
+            return "KEINE ANTWORT!", None
 
         return ans, ev
 
@@ -999,16 +989,11 @@ def validate_llm_response(response, expected_count):
 
     out_lines = []
     for i, b in enumerate(blocks, start=1):
-        ans_ev = parse_block(b)
-        if isinstance(ans_ev, tuple):
-            ans, ev = ans_ev
+        ans, ev = parse_block(b)
+        if ans == "KEINE ANTWORT!":
+            out_lines.append(f"{i}. KEINE ANTWORT!")
         else:
-            ans, ev = ans_ev, None
-
-        if ans == "NO ANSWER!":
-            out_lines.append(f"{i}. NO ANSWER!")
-        else:
-            out_lines.append(f"{i}. Answer: {ans}\n   Citation: {ev}")
+            out_lines.append(f"{i}. Antwort: {ans}\n   Beleg: {ev}")
     return "\n".join(out_lines)
 
 def split_text_by_sentences(text, chunk_size=4000):
@@ -1029,16 +1014,16 @@ def analyze_long_text_in_chunks_and_save(
     cleaned_text, context_query, output_file, expected_count, progress_data=None, question_lines=None
 ):
     system_message = (
-        "System: You are a conscientious assistant. Respond solely based on the provided excerpt. "
-        "Rules:\n"
-        "1) For each question provide exactly ONE sentence OR exactly 'NO ANSWER!'.\n"
-        "2) If the excerpt does not contain sufficient information OR you cannot give a literal quote, respond 'NO ANSWER!'.\n"
-        "3) After each answer there must be a line 'Citation:' with a short literal quote (max 20 words) from the excerpt; "
-        "for 'NO ANSWER!' do not output a citation line.\n"
-        "4) Do not fabricate citations. No prior knowledge, only the excerpt.\n"
-        "Format per question:\n"
-        "<Nr>. Answer: <one sentence or NO ANSWER!>\n"
-        "   Citation: \"<literal quote from the excerpt>\""
+        "System: Du bist ein gewissenhafter Assistent. Antworte ausschließlich auf Basis des bereitgestellten Abschnitts. "
+        "Regeln:\n"
+        "1) Für jede Frage genau EIN Satz ODER exakt 'KEINE ANTWORT!'.\n"
+        "2) Wenn der Abschnitt keine ausreichenden Informationen enthält ODER du kein wörtliches Zitat geben kannst, gib 'KEINE ANTWORT!'.\n"
+        "3) Nach jeder Antwort muss eine Zeile 'Beleg:' mit einem kurzen wörtlichen Zitat (max. 20 Wörter) aus dem Abschnitt folgen; "
+        "bei 'KEINE ANTWORT!' gib KEINE Beleg-Zeile aus.\n"        
+        "4) Erfinde keine Belege. Kein Vorwissen, nur Abschnitt.\n"
+        "Format pro Frage:\n"
+        "<Nr>. Antwort: <ein Satz oder KEINE ANTWORT!>\n"
+        "   Beleg: \"<wörtliches Zitat aus dem Abschnitt>\""
     )
     full_prompt_header = f"{system_message}\n\n{context_query}"
 
@@ -1064,19 +1049,19 @@ def analyze_long_text_in_chunks_and_save(
     with open(output_file, "w", encoding="utf-8") as f:
         for i, chunk in enumerate(chunks):
             if progress_data and progress_data.get("abort"):
-                logging.info("[ABORT] Analysis loop aborted")
+                logging.info("[ABORT] Analyse-Loop abgebrochen")
                 return output_file
 
             if not chunk.strip():
-                f.write(f"\n\nResult for section {i+1}:\n")
-                f.write("\n".join(f"{j+1}. NO ANSWER!" for j in range(expected_count)))
+                f.write("\n\nErgebnis für Abschnitt {}:\n".format(i + 1))
+                f.write("\n".join(f"{j+1}. KEINE ANTWORT!" for j in range(expected_count)))
                 continue
 
-            logging.info(f"Progress: section {i+1}/{len(chunks)}")
+            logging.info(f"Fortschritt: Abschnitt {i+1}/{len(chunks)}")
 
             chunk_low = chunk.lower()
 
-            prompt = f"{full_prompt_header}\n\nSection {i+1}:\n{chunk}"
+            prompt = f"{full_prompt_header}\n\nTextabschnitt {i+1}:\n{chunk}"
             analysis_result = query_llm_via_cli(prompt)
 
             validated_result = validate_llm_response(analysis_result, expected_count)
@@ -1091,52 +1076,52 @@ def analyze_long_text_in_chunks_and_save(
                 if kw_sets and n <= len(kw_sets):
                     kws = kw_sets[n-1]
                     if kws and not any(k in chunk_low for k in kws):
-                        rebuilt_blocks.append(f"{n}. NO ANSWER!")
+                        rebuilt_blocks.append(f"{n}. KEINE ANTWORT!")
                         continue
 
                 first_line = block_text.splitlines()[0] if block_text else ""
-                if re.search(r'(?i)^\s*(answer:)?\s*no answer!?$', first_line):
-                    rebuilt_blocks.append(f"{n}. NO ANSWER!")
+                if re.search(r'(?i)^\s*(antwort:)?\s*keine antwort!?$', first_line):
+                    rebuilt_blocks.append(f"{n}. KEINE ANTWORT!")
                     continue
 
-                ev_m = re.search(r'(?im)^\s*Citation:\s*[\"“]?(.+?)[\"”]?\s*$', block_text)
+                ev_m = re.search(r'(?im)^\s*Beleg:\s*[\"“]?(.+?)[\"”]?\s*$', block_text)
                 if not ev_m:
-                    rebuilt_blocks.append(f"{n}. NO ANSWER!")
+                    rebuilt_blocks.append(f"{n}. KEINE ANTWORT!")
                     continue
 
                 ev_text = ev_m.group(1).strip()
                 ev_low  = ev_text.lower()
 
                 meta_patterns = [
-                    r"no(?:\s+\w+){0,3}\s+term",
-                    r"nowhere\s+in\s+the\s+text",
-                    r"not\s+mentioned",
-                    r"no\s+literal\s+quote",
-                    r"no\s+answer",
+                    r"kein(?:\s+\w+){0,3}\s+begriff",
+                    r"nirgendwo\s+im\s+text",
+                    r"nicht\s+erwähnt",
+                    r"kein\s+wörtliches\s+zitat",
+                    r"keine\s+antwort",
                 ]
                 if any(re.search(p, ev_low) for p in meta_patterns):
-                    rebuilt_blocks.append(f"{n}. NO ANSWER!")
+                    rebuilt_blocks.append(f"{n}. KEINE ANTWORT!")
                     continue
 
                 if len(ev_text) < 10 or ev_low not in chunk_low:
-                    rebuilt_blocks.append(f"{n}. NO ANSWER!")
+                    rebuilt_blocks.append(f"{n}. KEINE ANTWORT!")
                     continue
 
                 if kw_sets and n <= len(kw_sets):
                     kws = kw_sets[n-1]
                     if kws and not any(k in ev_low for k in kws):
-                        rebuilt_blocks.append(f"{n}. NO ANSWER!")
+                        rebuilt_blocks.append(f"{n}. KEINE ANTWORT!")
                         continue
 
                 rebuilt_blocks.append(f"{n}. {block_text}")
 
             while len(rebuilt_blocks) < expected_count:
-                rebuilt_blocks.append(f"{len(rebuilt_blocks)+1}. NO ANSWER!")
+                rebuilt_blocks.append(f"{len(rebuilt_blocks)+1}. KEINE ANTWORT!")
 
-            result_text = f"\n\nResult for section {i+1}:\n" + "\n".join(rebuilt_blocks) + "\n"
+            result_text = f"\n\nErgebnis für Abschnitt {i+1}:\n" + "\n".join(rebuilt_blocks) + "\n"
             f.write(result_text)
 
-            logging.info("[CHECKED_RESULT] Section %d:\n%s", i + 1, result_text)
+            logging.info("[CHECKED_RESULT] Abschnitt %d:\n%s", i + 1, result_text)
 
     return output_file
 
@@ -1144,10 +1129,10 @@ def run_analysis(analysis_id, pdf_directory, context_query, expected_count, ques
     global current_process
     try:
         logging.info(
-            f"[RUN_ANALYSIS] started: analysis_id={analysis_id}, pdf_directory={pdf_directory}"
+            f"[RUN_ANALYSIS] gestartet: analysis_id={analysis_id}, pdf_directory={pdf_directory}"
         )
         if not os.path.exists(pdf_directory):
-            msg = f"PDF directory does not exist: {pdf_directory}"
+            msg = f"PDF-Verzeichnis existiert nicht: {pdf_directory}"
             logging.error(f"[RUN_ANALYSIS] {msg}")
             analysis_progress[analysis_id]["status"] = "error"
             analysis_progress[analysis_id]["error"] = msg
@@ -1156,12 +1141,12 @@ def run_analysis(analysis_id, pdf_directory, context_query, expected_count, ques
         pdf_files = [f for f in os.listdir(pdf_directory) if f.endswith(".pdf")]
         total_files = len(pdf_files)
         logging.info(
-            f"[RUN_ANALYSIS] Found PDF files: {total_files} in {pdf_directory}"
+            f"[RUN_ANALYSIS] Gefundene PDF-Dateien: {total_files} in {pdf_directory}"
         )
 
         if total_files == 0:
             analysis_progress[analysis_id]["status"] = "error"
-            analysis_progress[analysis_id]["error"] = "No PDF files found."
+            analysis_progress[analysis_id]["error"] = "Keine PDF-Dateien gefunden."
             return
 
         pdf_dir_name = os.path.basename(pdf_directory)
@@ -1175,14 +1160,14 @@ def run_analysis(analysis_id, pdf_directory, context_query, expected_count, ques
         for idx, filename in enumerate(pdf_files):
             if analysis_progress[analysis_id].get("abort"):
                 analysis_progress[analysis_id]["status"] = "aborted"
-                logging.info("[RUN_ANALYSIS] Analysis aborted by user.")
+                logging.info("[RUN_ANALYSIS] Analyse abgebrochen vom Nutzer.")
                 with process_lock:
                     current_process["analysis"] = False
                 return
 
             pdf_path = os.path.join(pdf_directory, filename)
             logging.info(
-                f"[RUN_ANALYSIS] Processing {filename} ({idx+1}/{total_files}) ..."
+                f"[RUN_ANALYSIS] Verarbeite {filename} ({idx+1}/{total_files}) ..."
             )
             try:
                 extracted_text, page_count = extract_text_from_pdf(
@@ -1191,7 +1176,7 @@ def run_analysis(analysis_id, pdf_directory, context_query, expected_count, ques
                 cleaned = clean_text(extracted_text)
 
                 analysis_output_path = os.path.join(
-                    analysis_output_folder, f"analysis_result_paper{idx+1}.txt"
+                    analysis_output_folder, f"analyseergebnis_paper{idx+1}.txt"
                 )
                 analyze_long_text_in_chunks_and_save(
                     cleaned,
@@ -1203,67 +1188,63 @@ def run_analysis(analysis_id, pdf_directory, context_query, expected_count, ques
                 )
 
                 results_summary.append(
-                    f"Analysis for {filename} completed (result in {analysis_output_path})."
+                    f"Analyse für {filename} abgeschlossen (Ergebnis in {analysis_output_path})."
                 )
 
                 progress = int(((idx + 1) / total_files) * 100)
                 analysis_progress[analysis_id]["percent"] = progress
-                logging.info(f"[RUN_ANALYSIS] Progress: {progress}%")
+                logging.info(f"[RUN_ANALYSIS] Fortschritt: {progress}%")
             except Exception as e:
                 logging.exception(
-                    f"[RUN_ANALYSIS] Error processing {filename}: {e}"
+                    f"[RUN_ANALYSIS] Fehler bei Verarbeitung von {filename}: {e}"
                 )
                 continue
 
         if not analysis_progress[analysis_id].get("error"):
             analysis_progress[analysis_id]["status"] = "completed"
             analysis_progress[analysis_id]["result"] = "\n".join(results_summary)
-            logging.info(f"[RUN_ANALYSIS] completed: {analysis_id}")
+            logging.info(f"[RUN_ANALYSIS] abgeschlossen: {analysis_id}")
     finally:
         with process_lock:
             current_process["analysis"] = False
             logging.info(
-                f"[RUN_ANALYSIS] current_process['analysis'] set to False."
+                f"[RUN_ANALYSIS] current_process['analysis'] auf False gesetzt."
             )
 
 # ---------------------------
-# Functions: Data analysis
+# Funktionen: Datenauswertung
 # ---------------------------
 def get_stopwords():
     try:
         nltk.data.find("corpora/stopwords")
     except LookupError:
         nltk.download("stopwords")
-    return nltk.corpus.stopwords.words("english")
+    return nltk.corpus.stopwords.words("german")
 
-english_stopwords = get_stopwords()
-custom_stopwords = set(english_stopwords).union(
+german_stopwords = get_stopwords()
+custom_stopwords = set(german_stopwords).union(
     {
-        "also",
-        "well",
-        "just",
-        "really",
-        "like",
-        "you know",
-        "actually",
-        "basically",
-        "maybe",
-        "probably",
-        "kind of",
-        "sort of",
-        "get",
-        "goes",
-        "good",
-        "whole",
-        "narrow",
-        "for that",
+        "sowie",
+        "geht",
+        "gut",
+        "eignet",
+        "ganzes",
+        "enge",
+        "ganzes.",
+        "dafür",
+        "eng",
+        "etwa",
+        "deren",
+        "wären",
+        "se",
+        "an.",
         "per",
-        "three",
-        "have",
-        "including",
-        "etc",
-        "among",
-        "becomes",
+        "kommt",
+        "(wie",
+        "werden",
+        "drei",
+        "haben",
+        "u.a.",
     }
 )
 
@@ -1274,65 +1255,67 @@ def tokenize_texts(text_data):
     ]
     return tokenized_texts
 
-def find_optimal_num_topics(texts, min_topics=2, max_topics=15, step=1, alpha_value="auto", beta_value="auto", abort_data=None):
+def find_optimal_num_topics(texts, min_topics=2, max_topics=15, step=1, alpha_value="auto", beta_value="auto", abort_data=None,    
+):
     tokenized_texts = tokenize_texts(texts)
     dictionary = Dictionary(tokenized_texts)
-    corpus = [dictionary.doc2bow(text) for text in tokenized_texts]
+    corpus      = [dictionary.doc2bow(text) for text in tokenized_texts]
 
     coherence_scores = []
     for num_topics in range(min_topics, max_topics + 1, step):
         if abort_data and abort_data.get("abort"):
-            logging.info("[ABORT] Topic search aborted")
+            logging.info("[ABORT] Topic-Suche abgebrochen")
             return 0
 
         lda_model = LdaModel(
-            corpus=corpus,
-            id2word=dictionary,
-            num_topics=num_topics,
-            random_state=42,
-            iterations=100,
-            passes=10,
-            alpha=alpha_value,
-            eta=beta_value,
+            corpus      = corpus,
+            id2word     = dictionary,
+            num_topics  = num_topics,
+            random_state= 42,
+            iterations  = 100,
+            passes      = 10,
+            alpha       = alpha_value,
+            eta         = beta_value,
         )
         coherence_model = CoherenceModel(
-            model=lda_model,
-            texts=tokenized_texts,
-            dictionary=dictionary,
-            coherence="c_v",
+            model     = lda_model,
+            texts     = tokenized_texts,
+            dictionary= dictionary,
+            coherence = "c_v",
         )
         coherence_score = coherence_model.get_coherence()
         coherence_scores.append(coherence_score)
-        logging.info(f"Number of topics: {num_topics} -- Coherence: {coherence_score:.4f}")
+        logging.info(f"Anzahl Topics: {num_topics} -- Coherence: {coherence_score:.4f}")
 
     optimal_topics = range(min_topics, max_topics + 1, step)[
         np.argmax(coherence_scores)
     ]
-    logging.info(f"Optimal number of topics: {optimal_topics}")
+    logging.info(f"Optimale Anzahl an Topics: {optimal_topics}")
     return optimal_topics
 
-def perform_lda(text_data, num_topics, alpha_value="auto", beta_value="auto", abort_data=None):
+def perform_lda(text_data, num_topics, alpha_value="auto", beta_value="auto", abort_data=None, 
+):
     if abort_data and abort_data.get("abort"):
-        logging.info("[ABORT] LDA training not started")
+        logging.info("[ABORT] LDA-Training nicht gestartet")
         return None, None, None, None
 
     tokenized_texts = tokenize_texts(text_data)
-    dictionary = Dictionary(tokenized_texts)
-    corpus = [dictionary.doc2bow(text) for text in tokenized_texts]
+    dictionary      = Dictionary(tokenized_texts)
+    corpus          = [dictionary.doc2bow(text) for text in tokenized_texts]
 
     if abort_data and abort_data.get("abort"):
-        logging.info("[ABORT] LDA training aborted")
+        logging.info("[ABORT] LDA-Training abgebrochen")
         return None, None, None, None
 
     lda_model = LdaModel(
-        corpus=corpus,
-        id2word=dictionary,
-        num_topics=num_topics,
-        random_state=42,
-        iterations=100,
-        passes=10,
-        alpha=alpha_value,
-        eta=beta_value,
+        corpus      = corpus,
+        id2word     = dictionary,
+        num_topics  = num_topics,
+        random_state= 42,
+        iterations  = 100,
+        passes      = 10,
+        alpha       = alpha_value,
+        eta         = beta_value,
     )
     return lda_model, dictionary, corpus, tokenized_texts
 
@@ -1348,10 +1331,10 @@ def visualize_lda(
         )
         pyLDAvis.save_html(lda_vis, output_html_path)
         print(
-            f"Visualization for question {question_id} saved as HTML: {output_html_path}"
+            f"Visualisierung für Frage {question_id} als HTML gespeichert: {output_html_path}"
         )
     except Exception as e:
-        print(f"Error during visualization for question {question_id}: {e}")
+        print(f"Fehler bei der Visualisierung für Frage {question_id}: {e}")
 
 def get_top_terms_for_topic(
     lda_model, topic_id, dictionary, p_w, lambda_val=1.0, topn=30
@@ -1397,7 +1380,7 @@ def plot_wordclouds(
         ).generate_from_frequencies(word_freq)
         plt.figure(figsize=(10, 5))
         plt.imshow(wordcloud, interpolation="bilinear")
-        plt.title(f"Wordcloud for Topic {topic_idx + 1} (λ={lambda_val})")
+        plt.title(f"Wordcloud für Topic {topic_idx + 1} (λ={lambda_val})")
         plt.axis("off")
         output_path = os.path.join(
             output_directory, f"wordcloud_topic_{topic_idx + 1}_lambda_{lambda_val}.png"
@@ -1405,7 +1388,7 @@ def plot_wordclouds(
         plt.savefig(output_path)
         plt.close()
         print(
-            f"Wordcloud for Topic {topic_idx + 1} (λ={lambda_val}) saved: {output_path}"
+            f"Wordcloud für Topic {topic_idx + 1} (λ={lambda_val}) gespeichert: {output_path}"
         )
 
 def create_knowledge_graph(
@@ -1495,14 +1478,14 @@ def create_knowledge_graph(
         connected_topics = [
             nbr for nbr in G.neighbors(node_name) if nbr.startswith("Topic")
         ]
-        main_topic = node_data.get("topic", "No main topic")
+        main_topic = node_data.get("topic", "Kein Haupttopic")
         other_topics = [t for t in connected_topics if t != main_topic]
         return (
             f"Label: {node_data['label']}<br>"
-            f"Connections: {connections}<br>"
-            f"Total weight: {total_weight:.6f}<br>"
-            f"Main topic: {main_topic}<br>"
-            f"Subtopics: {', '.join(other_topics) if other_topics else 'None'}"
+            f"Verbindungen: {connections}<br>"
+            f"Gesamtgewichtung: {total_weight:.6f}<br>"
+            f"Haupttopic: {main_topic}<br>"
+            f"Nebentopics: {', '.join(other_topics) if other_topics else 'Keine'}"
         )
 
     for node, data in G.nodes(data=True):
@@ -1553,7 +1536,7 @@ def create_knowledge_graph(
         textposition="top center",
         hovertext=word_1_hover,
         hoverinfo="text",
-        name="Terms (1 Connection)",
+        name="Begriffe (1 Verbindung)",
         marker=dict(color="#00CC99", size=15, line=dict(width=2, color="#262626")),
     )
     word_2_trace = go.Scatter(
@@ -1564,7 +1547,7 @@ def create_knowledge_graph(
         textposition="top center",
         hovertext=word_2_hover,
         hoverinfo="text",
-        name="Terms (2 Connections)",
+        name="Begriffe (2 Verbindungen)",
         marker=dict(color="#D86ECC", size=15, line=dict(width=2, color="#262626")),
     )
     word_3_trace = go.Scatter(
@@ -1575,7 +1558,7 @@ def create_knowledge_graph(
         textposition="top center",
         hovertext=word_3_hover,
         hoverinfo="text",
-        name="Terms (3 Connections)",
+        name="Begriffe (3 Verbindungen)",
         marker=dict(color="#FFC300", size=15, line=dict(width=2, color="#262626")),
     )
     word_4_trace = go.Scatter(
@@ -1586,7 +1569,7 @@ def create_knowledge_graph(
         textposition="top center",
         hovertext=word_4_hover,
         hoverinfo="text",
-        name="Terms (>3 Connections)",
+        name="Begriffe (>3 Verbindungen)",
         marker=dict(color="#FF5733", size=15, line=dict(width=2, color="#262626")),
     )
 
@@ -1594,7 +1577,7 @@ def create_knowledge_graph(
         data=edge_traces
         + [topic_trace, word_1_trace, word_2_trace, word_3_trace, word_4_trace],
         layout=go.Layout(
-            title=f"Interactive knowledge graph (λ={lambda_val})",
+            title=f"Interaktiver Wissensgraph (λ={lambda_val})",
             titlefont_size=16,
             showlegend=True,
             hovermode="closest",
@@ -1607,24 +1590,24 @@ def create_knowledge_graph(
     )
 
     fig.write_html(output_html)
-    print(f"Knowledge graph (λ={lambda_val}) saved as HTML: {output_html}")
+    print(f"Wissensgraph (λ={lambda_val}) als HTML gespeichert: {output_html}")
 
 def get_combined_prompt(top_terms_freq, top_terms_excl, question_text):
     prompt = f"""
-    For the following question: '{question_text}', two sets of top terms were identified after LDA topic modeling:
+Für folgende Frage: '{question_text}' wurden nach der LDA-Themenmodellierung zwei Sätze von Top-Begriffen ermittelt:
 
-    - Based on frequency (λ = 1): {', '.join(top_terms_freq)}
-    - Based on exclusivity (λ = 0): {', '.join(top_terms_excl)}
+- Basierend auf Häufigkeit (λ = 1): {', '.join(top_terms_freq)}
+- Basierend auf Exklusivität (λ = 0): {', '.join(top_terms_excl)}
 
-    Please interpret these two sets of top terms according to the following structure:
+Bitte interpretiere diese beiden Sätze von Top-Begriffen nach folgendem Schema:
 
-    1) Introduction: Brief overview of the topic.
-    2) Most frequent terms (λ = 1): Explain why these terms appear particularly often and what relevance they have for answering the question.
-    3) Most exclusive terms (λ = 0): Explain what these especially exclusive terms indicate and how they complement or specify the topic.
-    4) Conclusion: Provide a concise summary of how the two sets of terms together help answer the question.
+1) Einleitung: Kurze Einführung in das Thema.
+2) Häufigste Begriffe (λ = 1): Erläutere, warum diese Begriffe besonders oft auftreten und welche Relevanz sie für die Beantwortung der Frage haben.
+3) Exklusivste Begriffe (λ = 0): Erläutere, was diese besonders exklusiven Begriffe aussagen und wie sie das Thema ergänzen oder spezifizieren.
+4) Fazit: Ziehe ein zusammenfassendes Resümee, wie die beiden Begriffssätze gemeinsam die Frage beantworten helfen.
 
-    Please respond in clear continuous prose without markdown, bullets, asterisks, or other special formatting.
-    """
+Bitte gib deine Antwort in klarem Fließtext ohne Markdown, Sterne, Aufzählungszeichen oder andere Sonderformatierungen zurück.
+"""
     return prompt
 
 def query_ollama(input_text, model="llama3.1p"):
@@ -1640,48 +1623,49 @@ def query_ollama(input_text, model="llama3.1p"):
         )
         stdout, stderr = process.communicate(input=input_text, timeout=180)
         if process.returncode != 0:
-            print(f"Error during model request: {stderr.strip()}")
-            return "Interpretation not possible"
+            print(f"Fehler bei der Modellanfrage: {stderr.strip()}")
+            return "Interpretation nicht möglich"
         return stdout.strip()
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return "Error retrieving interpretation"
+        print(f"Ein Fehler ist aufgetreten: {e}")
+        return "Fehler beim Abrufen der Interpretation"
 
 def save_interpretations_to_txt(interpretations, file_path):
     with open(file_path, "w", encoding="utf-8") as file:
         for interpretation in interpretations:
-            top_terms_freq = interpretation.get("Top Terms (frequency, λ=1)", "")
-            top_terms_excl = interpretation.get("Top Terms (exclusivity, λ=0)", "")
-            top_terms = f"Frequency (λ=1): {top_terms_freq}\nExclusivity (λ=0): {top_terms_excl}"
-            file.write(f"Topic {interpretation['Topic']}\n")
+            top_terms_freq = interpretation.get("Top Terms (Häufigkeit, λ=1)", "")
+            top_terms_excl = interpretation.get("Top Terms (Exklusivität, λ=0)", "")
+            top_terms = f"Häufigkeit (λ=1): {top_terms_freq}\nExklusivität (λ=0): {top_terms_excl}"
+            file.write(f"Thema {interpretation['Topic']}\n")
             file.write("=" * 30 + "\n")
-            file.write(f"Terms:\n{top_terms}\n")
+            file.write(f"Begriffe:\n{top_terms}\n")
             file.write("\nInterpretation:\n")
             file.write(f"{interpretation['Interpretation']}\n")
             file.write("\n" + "-" * 50 + "\n")
-    print(f"Interpretations saved to '{file_path}'.")
+    print(f"Interpretationen in '{file_path}' gespeichert.")
 
-def lda_analysis_with_interpretation(file_path, question_id, num_topics, model="llama3.1p", output_directory=None, abort_data=None):
+def lda_analysis_with_interpretation(file_path, question_id, num_topics, model="llama3.1p", output_directory=None, abort_data=None,
+):
     try:
 
         if abort_data and abort_data.get("abort"):
-            logging.info(f"[LDA] Abort detected before starting analysis for question {question_id}.")
+            logging.info(f"[LDA] Abbruch vor Start der Analyse für Frage {question_id} erkannt.")
             return
 
         data = pd.read_csv(file_path, encoding="utf-8")
-        text_data = data[f"Question {question_id} Answers"].dropna().tolist()
+        text_data = data[f"Frage {question_id} Antworten"].dropna().tolist()
         if not text_data:
-            print(f"No data available for LDA analysis of question {question_id}.")
+            print(f"Keine Daten für die LDA-Analyse von Frage {question_id}.")
             return
 
         lda_model, dictionary, corpus, _ = perform_lda(
             text_data, num_topics, abort_data=abort_data
         )
-        if lda_model is None:
+        if lda_model is None:  
             return
 
         if abort_data and abort_data.get("abort"):
-            logging.info("[ABORT] Aborted after LDA training")
+            logging.info("[ABORT] Nach LDA-Training abgebrochen")
             return
 
         total_count = sum(dictionary.cfs.values())
@@ -1701,7 +1685,7 @@ def lda_analysis_with_interpretation(file_path, question_id, num_topics, model="
         for cluster_idx, topic_idx in enumerate(sorted_topic_indices):
 
             if abort_data and abort_data.get("abort"):
-                logging.info(f"[LDA] Abort during interpretation for question {question_id}, topic {cluster_idx+1}.")
+                logging.info(f"[LDA] Abbruch während Interpretation für Frage {question_id}, Topic {cluster_idx+1}.")
                 break
 
             top_terms_freq = get_top_terms_for_topic(
@@ -1712,11 +1696,11 @@ def lda_analysis_with_interpretation(file_path, question_id, num_topics, model="
             )
 
             combined_prompt = get_combined_prompt(
-                top_terms_freq, top_terms_excl, f"Question {question_id}"
+                top_terms_freq, top_terms_excl, f"Frage {question_id}"
             )
 
             if abort_data and abort_data.get("abort"):
-                logging.info(f"[LDA] Abort before LLM interpretation for question {question_id}, topic {cluster_idx+1}.")
+                logging.info(f"[LDA] Abbruch vor LLM-Interpretation für Frage {question_id}, Topic {cluster_idx+1}.")
                 break
 
             combined_output = query_ollama(combined_prompt, model)
@@ -1724,14 +1708,14 @@ def lda_analysis_with_interpretation(file_path, question_id, num_topics, model="
             interpretations.append(
                 {
                     "Topic": cluster_idx + 1,
-                    "Top Terms (frequency, λ=1)": ", ".join(top_terms_freq),
-                    "Top Terms (exclusivity, λ=0)": ", ".join(top_terms_excl),
+                    "Top Terms (Häufigkeit, λ=1)": ", ".join(top_terms_freq),
+                    "Top Terms (Exklusivität, λ=0)": ", ".join(top_terms_excl),
                     "Interpretation": "\n".join(interpretation_sections).strip(),
                 }
             )
 
         if abort_data and abort_data.get("abort"):
-            logging.info(f"[LDA] Full abort for question {question_id}, saving partial results if any.")
+            logging.info(f"[LDA] Abbruch vollständig für Frage {question_id}, speichere ggf. Teil-Ergebnisse.")
 
         if output_directory is None:
             output_directory = os.path.join(
@@ -1799,41 +1783,30 @@ def lda_analysis_with_interpretation(file_path, question_id, num_topics, model="
         )
         save_interpretations_to_txt(interpretations, output_txt_path)
 
-        print("LDA analysis completed. Results in folder:", output_directory)
+        print("LDA-Analyse abgeschlossen. Ergebnisse im Ordner:", output_directory)
     except Exception as e:
         print(
-            f"Error in lda_analysis_with_interpretation for question {question_id}: {e}"
+            f"Fehler in lda_analysis_with_interpretation für Frage {question_id}: {e}"
         )
 
 def load_text_files(directory):
     data = []
     for filename in os.listdir(directory):
-        if not filename.endswith(".txt"):
-            continue
-        path = os.path.join(directory, filename)
-        content = None
-        for encoding in ("utf-8", "utf-8-sig", "latin-1"):
-            try:
-                with open(path, "r", encoding=encoding, errors="strict") as file:
-                    content = file.read().strip()
-                break
-            except UnicodeDecodeError:
-                continue
-        if content is None:
-            with open(path, "r", encoding="utf-8", errors="replace") as file:
+        if filename.endswith(".txt"):
+            with open(os.path.join(directory, filename), "r", encoding="utf-8") as file:
                 content = file.read().strip()
-        if content:
-            data.append(content)
+                if content:
+                    data.append(content)
     return data
 
 def categorize_responses_by_question(data):
     all_sections = {}
     for text in data:
         pattern_section = (
-            r"Result for section \d+:\s*((?:(?:\d+\.\s*.*?(?=\n\d+\.|\Z)))+)"
+            r"Ergebnis für Abschnitt \d+:\s*((?:(?:\d+\.\s*.*?(?=\n\d+\.|\Z)))+)"
         )
         sections = re.findall(pattern_section, text, re.DOTALL)
-        print(f"DEBUG: Sections found: {sections}")
+        print(f"DEBUG: Sections gefunden: {sections}")
         for idx, sec in enumerate(sections, start=1):
             answers = re.findall(r"\d+\.\s*(.*?)(?=\n\d+\.|\Z)", sec, re.DOTALL)
             answers = [ans.strip() for ans in answers]
@@ -1848,17 +1821,17 @@ def sediment_analysis(directory, analysis_id):
 
     data = load_text_files(directory)
     if not data:
-        logging.error("[SEDIMENT] No texts found")
+        logging.error("[SEDIMENT] Keine Texte gefunden")
         sediment_progress[analysis_id].update(
-            status="error", error="No texts found"
+            status="error", error="Keine Texte gefunden"
         )
         return
 
     responses_by_question = categorize_responses_by_question(data)
-    logging.info(f"[SEDIMENT] Answers by question: {responses_by_question}")
+    logging.info(f"[SEDIMENT] Antworten nach Frage: {responses_by_question}")
 
     filtered_responses = {
-        q_id: [r for r in responses if "no answer" not in r.lower()]
+        q_id: [r for r in responses if "keine antwort" not in r.lower()]
         for q_id, responses in responses_by_question.items()
         if any(r.strip() for r in responses)
     }
@@ -1866,7 +1839,7 @@ def sediment_analysis(directory, analysis_id):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
     evaluation_folder = os.path.join(ANALYSIS_ROOT, f"evaluation_{timestamp}")
     os.makedirs(evaluation_folder, exist_ok=True)
-    logging.info(f"[SEDIMENT] Evaluation folder: {evaluation_folder}")
+    logging.info(f"[SEDIMENT] Evaluation-Ordner: {evaluation_folder}")
 
     questions_file = os.path.join(directory, "questions.txt")
     if os.path.exists(questions_file):
@@ -1874,21 +1847,21 @@ def sediment_analysis(directory, analysis_id):
             questions = [line.strip() for line in f if line.strip()]
     else:
         questions = []
-        logging.warning("[SEDIMENT] No questions.txt found.")
+        logging.warning("[SEDIMENT] Keine questions.txt gefunden.")
 
     total_questions = len(filtered_responses)
     if total_questions == 0:
-        logging.error("[SEDIMENT] No valid answers after filtering")
+        logging.error("[SEDIMENT] Keine gültigen Antworten nach Filterung")
         sediment_progress[analysis_id].update(
-            status="error", error="No valid answers found"
+            status="error", error="Keine gültigen Antworten gefunden"
         )
         return
     sediment_progress[analysis_id].update(percent=10)
-    logging.info("[SEDIMENT] CSV export completed, starting LDA analysis")
+    logging.info("[SEDIMENT] CSV-Export abgeschlossen, starte LDA-Analyse")
 
     for idx, (q_id, responses) in enumerate(filtered_responses.items(), start=1):
         if sediment_progress[analysis_id].get("abort"):
-            logging.info("[ABORT] Sediment loop aborted")
+            logging.info("[ABORT] Sediment-Loop abgebrochen")
             sediment_progress[analysis_id].update(status="aborted")
             with process_lock:
                 current_process = None
@@ -1899,7 +1872,7 @@ def sediment_analysis(directory, analysis_id):
 
         if sediment_progress[analysis_id].get("abort"):
             sediment_progress[analysis_id].update(status="aborted")
-            logging.info("[SEDIMENT] Abort detected just before LDA analysis.")
+            logging.info("[SEDIMENT] Abbruch direkt vor LDA-Analyse erkannt.")
             with process_lock:
                 current_process = None
             return
@@ -1913,27 +1886,26 @@ def sediment_analysis(directory, analysis_id):
         ) as f:
             f.write(question_text)
 
-        df = pd.DataFrame({f"Question {q_id} Answers": responses})
+        df = pd.DataFrame({f"Frage {q_id} Antworten": responses})
         csv_path = os.path.join(question_folder, f"question_{q_id}_responses.csv")
         df.to_csv(csv_path, index=False, encoding="utf-8")
-        logging.info(f"[SEDIMENT] Answers for question {q_id} saved in {csv_path}")
+        logging.info(f"[SEDIMENT] Antworten für Frage {q_id} gespeichert in {csv_path}")
 
         percent = 10 + int((idx / total_questions) * 80)
         sediment_progress[analysis_id].update(percent=percent)
         logging.info(
-            f"[SEDIMENT] Question {q_id}/{total_questions} processed, progress {percent}%"
+            f"[SEDIMENT] Frage {q_id}/{total_questions} verarbeitet, Fortschritt {percent}%"
         )
 
         optimal_topics = find_optimal_num_topics(
-            responses, min_topics=2, max_topics=15,
-            step=1, abort_data=sediment_progress[analysis_id]
-        )
+                responses, min_topics=2, max_topics=15,
+                step=1, abort_data=sediment_progress[analysis_id])
 
-        logging.info(f"[SEDIMENT] Optimal topics for question {q_id}: {optimal_topics}")
+        logging.info(f"[SEDIMENT] Optimal Topics für Frage {q_id}: {optimal_topics}")
 
         if sediment_progress[analysis_id].get("abort"):
             sediment_progress[analysis_id].update(status="aborted")
-            logging.info("[SEDIMENT] Abort detected before interpretation.")
+            logging.info("[SEDIMENT] Abbruch vor Interpretation erkannt.")
             with process_lock:
                 current_process = None
             return
@@ -1947,16 +1919,16 @@ def sediment_analysis(directory, analysis_id):
             abort_data=sediment_progress[analysis_id],
         )
         logging.info(
-            f"[SEDIMENT] LDA analysis and interpretation for question {q_id} completed"
+            f"[SEDIMENT] LDA-Analyse und Interpretation für Frage {q_id} abgeschlossen"
         )
 
-    logging.info(f"[SEDIMENT] Data evaluation completed for {directory}")
+    logging.info(f"[SEDIMENT] Datenauswertung abgeschlossen für {directory}")
     sediment_progress[analysis_id].update(status="completed", percent=100, folder=evaluation_folder)
     with process_lock:
         current_process = None
 
 # ---------------------------
-# Endpoints: Data analysis
+# Endpunkte: Datenauswertung
 # ---------------------------
 @app.route("/list_data_directories", methods=["GET"])
 def list_data_directories():
@@ -1964,7 +1936,7 @@ def list_data_directories():
         d for d in os.listdir(DATA_ROOT) if os.path.isdir(os.path.join(DATA_ROOT, d))
     ]
     if not dirs:
-        dirs = ["No directories found"]
+        dirs = ["Keine Verzeichnisse gefunden"]
     return jsonify({"directories": dirs})
 
 def sediment_analysis_background(analysis_id, data_directory):
@@ -1975,7 +1947,7 @@ def sediment_analysis_background(analysis_id, data_directory):
         if current.get("status") not in ("error", "aborted", "completed"):
             sediment_progress[analysis_id].update(status="completed", percent=100)
     except Exception as e:
-        logging.exception("[SEDIMENT] Unexpected error")
+        logging.exception("[SEDIMENT] Unerwarteter Fehler")
         sediment_progress[analysis_id].update(status="error", error=str(e))
     finally:
         with process_lock:
@@ -1987,16 +1959,16 @@ def start_sediment_analysis():
     data = request.get_json()
     selected_dir = data.get("data_directory")
     if not selected_dir:
-        return jsonify({"error": "Please select a directory in the data folder."})
+        return jsonify({"error": "Bitte ein Verzeichnis im data-Ordner auswählen."})
 
     full_path = os.path.join(DATA_ROOT, selected_dir)
     if not os.path.exists(full_path):
-        return jsonify({"error": "The selected directory does not exist."})
+        return jsonify({"error": "Das gewählte Verzeichnis existiert nicht."})
 
     with process_lock:
         if current_process.get("sediment"):
             return (
-                jsonify({"error": "A data evaluation process is already running."}),
+                jsonify({"error": "Ein Datenauswertungsprozess läuft bereits."}),
                 400,
             )
         current_process["sediment"] = True
@@ -2012,19 +1984,21 @@ def start_sediment_analysis():
 
     return jsonify({"analysis_id": analysis_id})
 
+
 @app.route("/sediment_analysis_progress", methods=["GET"])
 def get_sediment_analysis_progress():
     analysis_id = request.args.get("id")
     if not analysis_id or analysis_id not in sediment_progress:
-        return jsonify({"error": "Invalid analysis ID."})
+        return jsonify({"error": "Ungültige Analysis-ID."})
     return jsonify(sediment_progress[analysis_id])
 
+
 # ---------------------------
-# Front-end content
+# Frontend-Inhalte
 # ---------------------------
 HTML_CONTENT = """
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -2036,54 +2010,54 @@ HTML_CONTENT = """
     <h1>FACTS V2.5</h1>
 
     <div class="section">
-      <h3>1: DATA ACQUISITION</h3>
-      <label for="database-select">Select database:</label>
+      <h3>1: DATENBESCHAFFUNG</h3>
+      <label for="database-select">Datenbank auswählen:</label>
       <select id="database-select">
         <option value="pedocs">peDOCs</option>
         <option value="arxiv">Arxiv</option>
         <option value="eric">ERIC</option>
       </select>
-      <label for="search-query">Search terms:</label>
-      <input type="text" id="search-query" placeholder="e.g. machine learning">
-      <label for="publication-year">Publication year:</label>
-      <input type="text" id="publication-year" placeholder="e.g. 2023">
-      <label for="num-papers">Number of papers:</label>
+      <label for="search-query">Suchbegriffe:</label>
+      <input type="text" id="search-query" placeholder="z.B. maschinelles Lernen">
+      <label for="publication-year">Veröffentlichungsjahr:</label>
+      <input type="text" id="publication-year" placeholder="z.B. 2023">
+      <label for="num-papers">Anzahl der Paper:</label>
       <input type="number" id="num-papers" min="1" max="150" value="10">
       <div class="buttons">
-        <button id="download-btn">Download data</button>
-        <button id="abort-btn" style="display: none;">Abort</button>
+        <button id="download-btn">Daten herunterladen</button>
+        <button id="abort-btn" style="display: none;">Abbrechen</button>
       </div>
       <div id="spinner" class="spinner" style="display: none;"></div>
       <div id="progress-container" style="display: none;">
         <progress id="progress-bar" value="0" max="100"></progress>
-        <p id="progress-text">0% completed</p>
+        <p id="progress-text">0% abgeschlossen</p>
       </div>
       <div id="results" class="result-container" style="display: none;"></div>
     </div>
     <hr>
 
     <div class="section">
-      <h3>2: DATA ANALYSIS</h3>
+      <h3>2: DATENANALYSE</h3>
       <form id="analyse-form">
-        <label for="pdf-directory">Select PDF directory:</label>
+        <label for="pdf-directory">PDF-Verzeichnis auswählen:</label>
         <select id="pdf-directory" name="pdf_directory" required>
-          <option value="">Please choose a directory</option>
+          <option value="">Bitte Verzeichnis wählen</option>
         </select>
         <div id="upload-area" class="upload-area">
-            <p>Drag & Drop your PDFs here or click to select them</p>
+            <p>Drag & Drop Ihre PDFs hier oder klicken Sie, um sie auszuwählen</p>
             <input type="file" id="pdf-upload" accept=".pdf" multiple style="display:none;">
-            <button id="upload-btn">Upload PDF files</button>
+            <button id="upload-btn">PDF-Dateien hochladen</button>
         </div>
-        <label for="questions">Questions (one per line):</label>
-        <textarea id="questions" name="questions" rows="5" required placeholder="e.g. Which central factors influence educational practice?"></textarea>
+        <label for="questions">Fragen (eine pro Zeile):</label>
+        <textarea id="questions" name="questions" rows="5" required placeholder="z.B. Welche zentralen Faktoren beeinflussen schulische Praxis?"></textarea>
         <div class="buttons" style="text-align: center; margin-top: 15px;">
-          <button type="submit">Start analysis</button>
-          <button id="abort-analysis-btn" style="display:none;">Abort</button>
+          <button type="submit">Analyse starten</button>
+          <button id="abort-analysis-btn" style="display:none;">Abbrechen</button>
         </div>
       </form>
       <div id="analyse-progress-container" style="display: none; margin-top: 15px;">
         <progress id="analyse-progress-bar" value="0" max="100"></progress>
-        <p id="analyse-progress-text">0% completed</p>
+        <p id="analyse-progress-text">0% abgeschlossen</p>
       </div>
       <div id="analyse-spinner" class="spinner" style="display: none;"></div>
       <pre id="analyse-result" class="result-container" style="display: none;"></pre> 
@@ -2091,14 +2065,14 @@ HTML_CONTENT = """
     <hr>
 
     <div class="section" id="sediment-analysis-section">
-      <h3>3: DATA EVALUATION</h3>
-      <label for="data-directory">Select data directory:</label>
+      <h3>3: DATENAUSWERTUNG</h3>
+      <label for="data-directory">Data-Verzeichnis auswählen:</label>
       <select id="data-directory" name="data_directory" required>
-        <option value="">Please choose a directory</option>
+        <option value="">Bitte Verzeichnis wählen</option>
       </select>
       <div class="buttons">
-        <button id="start-sediment-btn">Start evaluation</button>
-        <button id="abort-sediment-btn" style="display:none;">Abort</button>
+        <button id="start-sediment-btn">Auswertung starten</button>
+        <button id="abort-sediment-btn" style="display:none;">Abbrechen</button>
       </div>
       <div class="progress-bar-container" style="display: none;">
         <div class="progress-bar"></div>
@@ -2447,6 +2421,7 @@ document.addEventListener('DOMContentLoaded', function() {
   let analysisInterval;
   let sedimentInterval;
 
+  // Download starten
   downloadBtn.addEventListener('click', function() {
     const db = databaseSelect.value;
     const query = searchQuery.value.trim();
@@ -2454,13 +2429,13 @@ document.addEventListener('DOMContentLoaded', function() {
     const numPapers = parseInt(numPapersInput.value);
 
     if (!query || !year || !numPapers) {
-        alert("Please complete all fields: search query, year, and number of papers.");
+        alert("Bitte alle Felder (Suchbegriffe, Jahr, Anzahl) ausfüllen.");
         return;
     }
 
     disableOtherProcessButtons("download");
 
-    setButtonRunning(downloadBtn, "Process running...");
+    setButtonRunning(downloadBtn, "Prozess läuft…");
     abortBtn.style.display = 'inline-block';
     abortBtn.disabled = false;
     spinner.style.display = 'block';
@@ -2468,7 +2443,7 @@ document.addEventListener('DOMContentLoaded', function() {
     resultsDiv.innerText = '';
     progressContainer.style.display = 'block';
     progressBar.value = 0;
-    progressText.innerText = "0% completed";
+    progressText.innerText = "0% abgeschlossen";
 
     fetch('/download_papers', {
         method: 'POST',
@@ -2478,7 +2453,7 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(data => {
         if (data.error) {
-          alert("Error: " + data.error);
+          alert("Fehler: " + data.error);
           enableAllProcessButtons();
           resetDownloadUI();
           return;
@@ -2490,32 +2465,32 @@ document.addEventListener('DOMContentLoaded', function() {
               .then(resp => resp.json())
               .then(progressData => {
                   progressBar.value = progressData.percent || 0;
-                  progressText.innerText = (progressData.percent || 0) + "% completed";
+                  progressText.innerText = (progressData.percent || 0) + "% abgeschlossen";
                   if (["completed","error","aborted"].includes(progressData.status)) {
                       clearInterval(progressInterval);
                       spinner.style.display = 'none';
                       enableAllProcessButtons();
 
-                      clearButtonRunning(downloadBtn, "Download data");
+                      clearButtonRunning(downloadBtn, "Daten herunterladen");
 
                       abortBtn.style.display = 'none';
 
                       if (progressData.status === "completed") {
                           resultsDiv.style.display = 'block';
-                          resultsDiv.innerText = "Download complete. Files have been saved in folder " + db + ".";
+                          resultsDiv.innerText = "Download abgeschlossen. Dateien wurden im Ordner " + db + " gespeichert.";
                       } else if (progressData.status === "aborted") {
                           resultsDiv.style.display = 'block';
-                          resultsDiv.innerText = "Download aborted.";
+                          resultsDiv.innerText = "Download abgebrochen.";
                       } else {
                           resultsDiv.style.display = 'block';
-                          resultsDiv.innerText = "Error during download: " + (progressData.error || 'Unknown');
+                          resultsDiv.innerText = "Fehler beim Download: " + (progressData.error || 'Unbekannt');
                       }
                       currentDownloadId = null;
                   }
               })
               .catch(error => {
                   clearInterval(progressInterval);
-                  console.error("Error fetching progress:", error);
+                  console.error("Fehler beim Abrufen des Fortschritts:", error);
                   enableAllProcessButtons();
                   resetDownloadUI();
                   currentDownloadId = null;
@@ -2523,17 +2498,18 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1000);
     })
     .catch(error => {
-        console.error("Error starting download:", error);
-        alert("Error starting the download.");
+        console.error("Fehler beim Starten des Downloads:", error);
+        alert("Fehler beim Starten des Downloads.");
         enableAllProcessButtons();
         resetDownloadUI();
         currentDownloadId = null;
     });
   });
 
+  // Download abbrechen
   abortBtn.addEventListener('click', function() {
     if (!currentDownloadId) {
-        alert("No download process is currently running.");
+        alert("Es läuft derzeit kein Download-Prozess.");
         return;
     }
     abortBtn.disabled = true;
@@ -2549,21 +2525,22 @@ document.addEventListener('DOMContentLoaded', function() {
         spinner.style.display = 'none';
         progressContainer.style.display = 'none';
 
-        clearButtonRunning(downloadBtn, "Download data");
+        clearButtonRunning(downloadBtn, "Daten herunterladen");
         abortBtn.style.display = 'none';
         resultsDiv.style.display = 'block';
-        resultsDiv.innerText = "Download aborted.";
+        resultsDiv.innerText = "Download abgebrochen.";
         currentDownloadId = null;
         enableAllProcessButtons();
     })
     .catch(error => {
-        console.error("Error aborting the download:", error);
+        console.error("Fehler beim Abbrechen des Downloads:", error);
     });
   });
 
+  // Analyse abbrechen
   abortAnalysisBtn.addEventListener('click', function() {
     if (!currentAnalysisId) {
-        alert("No analysis process is currently running.");
+        alert("Es läuft derzeit kein Analyse-Prozess.");
         return;
     }
     abortAnalysisBtn.disabled = true;
@@ -2577,21 +2554,22 @@ document.addEventListener('DOMContentLoaded', function() {
         console.log(data.message || data.error);
         clearInterval(analysisInterval);
         analysisResultsContainer.style.display = 'block';
-        analysisResultsContainer.innerText = "Analysis aborted.";
+        analysisResultsContainer.innerText = "Analyse abgebrochen.";
         resetAnalysisUI();
         enableAllProcessButtons();
         currentAnalysisId = null;
     })
     .catch(err => {
-        console.error("Error aborting the analysis:", err);
+        console.error("Fehler beim Abbrechen der Analyse:", err);
         resetAnalysisUI();
         enableAllProcessButtons();
     });
   });
 
+  // Datenauswertung abbrechen
   abortSedimentBtn.addEventListener('click', function() {
     if (!currentSedimentId) {
-        alert("No data evaluation process is currently running.");
+        alert("Es läuft derzeit kein Datenauswertungsprozess.");
         return;
     }
     abortSedimentBtn.disabled = true;
@@ -2606,11 +2584,11 @@ document.addEventListener('DOMContentLoaded', function() {
         clearInterval(sedimentInterval);
         document.querySelector('.progress-bar-container').style.display = 'none';
 
-        clearButtonRunning(sedimentBtn, "Start evaluation");
+        clearButtonRunning(sedimentBtn, "Auswertung starten");
 
         sedimentResultsContainer.classList.add('result-container');
         sedimentResultsContainer.style.display = 'block';
-        sedimentResultsContainer.innerText = "Data evaluation aborted.";
+        sedimentResultsContainer.innerText = "Datenauswertung abgebrochen.";
 
         enableAllProcessButtons();
         currentSedimentId = null;
@@ -2620,11 +2598,11 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })
     .catch(err => {
-        console.error("Error aborting data evaluation:", err);
+        console.error("Fehler beim Abbrechen der Datenauswertung:", err);
         document.querySelector('.progress-bar-container').style.display = 'none';
         sedimentResultsContainer.classList.add('result-container');
         sedimentResultsContainer.style.display = 'block';
-        sedimentResultsContainer.innerText = "Error aborting data evaluation.";
+        sedimentResultsContainer.innerText = "Fehler beim Abbrechen der Datenauswertung.";
         enableAllProcessButtons();
         if (abortSedimentBtn) {
             abortSedimentBtn.style.display = 'none';
@@ -2633,6 +2611,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
+  // Verzeichnisse aktualisieren
   function updateDirectories() {
     fetch('/list_directories')
     .then(response => response.json())
@@ -2640,7 +2619,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const select = document.getElementById('pdf-directory');
         const currentSelection = select.value;
 
-        let newOptions = '<option value="">Please choose a directory</option>';
+        let newOptions = '<option value="">Bitte Verzeichnis wählen</option>';
         data.directories.forEach(dir => {
           const safeDir = dir.replace(/\\\\/g, '\\\\\\\\');
           newOptions += `<option value="${safeDir}">${safeDir}</option>`;
@@ -2652,7 +2631,7 @@ document.addEventListener('DOMContentLoaded', function() {
           select.value = currentSelection;
         }
     })
-    .catch(error => console.error("Error loading directories:", error));
+    .catch(error => console.error("Fehler beim Laden der Verzeichnisse:", error));
   }
   setInterval(updateDirectories, 4000);
 
@@ -2662,7 +2641,7 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(data => {
         const select = document.getElementById('data-directory');
         const currentSelection = select.value;
-        let newOptions = '<option value="">Please choose a directory</option>';
+        let newOptions = '<option value="">Bitte Verzeichnis wählen</option>';
         data.directories.forEach(dir => {
           const safeDir = dir.replace(/\\\\/g, '\\\\\\\\');
           newOptions += `<option value="${safeDir}">${safeDir}</option>`;
@@ -2672,11 +2651,12 @@ document.addEventListener('DOMContentLoaded', function() {
           select.value = currentSelection;
         }
       })
-      .catch(error => console.error("Error loading data directories:", error));
+      .catch(error => console.error("Fehler beim Laden der Data-Verzeichnisse:", error));
   }
   setInterval(updateDataDirectories, 5000);
   updateDataDirectories();
 
+  // Drag-and-Drop und Upload für PDFs
   const uploadArea = document.getElementById('upload-area');
   const pdfUpload = document.getElementById('pdf-upload');
 
@@ -2712,28 +2692,29 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.json())
       .then(data => {
           if(data.error){
-              alert("Upload-Error: " + data.error);
+              alert("Upload-Fehler: " + data.error);
           } else {
-              alert("Upload successful! Files were saved in folder " + data.folder + ".");
+              alert("Upload erfolgreich! Dateien wurden in Ordner " + data.folder + " gespeichert.");
           }
       })
       .catch(error => {
-          console.error("Error during upload:", error);
+          console.error("Fehler beim Upload:", error);
           alert("Fehler beim Upload.");
       });
   }
 
+  // Datenauswertung starten
   sedimentBtn.addEventListener('click', function() {
     disableOtherProcessButtons("sediment");
 
     const dataDir = document.getElementById('data-directory').value;
     if (!dataDir) {
-      alert("Please select a data directory.");
+      alert("Bitte wähle ein Data-Verzeichnis aus.");
       enableAllProcessButtons();
       return;
     }
 
-    setButtonRunning(sedimentBtn, "Process running...");
+    setButtonRunning(sedimentBtn, "Prozess läuft…");
     document.querySelector('.progress-bar-container').style.display = 'block';
     sedimentResultsContainer.style.display = 'none';
 
@@ -2745,10 +2726,10 @@ document.addEventListener('DOMContentLoaded', function() {
     .then(response => response.json())
     .then(data => {
       if (data.error) {
-        alert("Error: " + data.error);
+        alert("Fehler: " + data.error);
         document.querySelector('.progress-bar-container').style.display = 'none';
         enableAllProcessButtons();
-        clearButtonRunning(sedimentBtn, "Start evaluation");
+        clearButtonRunning(sedimentBtn, "Auswertung starten");
         return;
       }
       currentSedimentId = data.analysis_id;
@@ -2765,17 +2746,17 @@ document.addEventListener('DOMContentLoaded', function() {
               clearInterval(sedimentInterval);
               document.querySelector('.progress-bar-container').style.display = 'none';
               enableAllProcessButtons();
-              clearButtonRunning(sedimentBtn, "Start evaluation");
+              clearButtonRunning(sedimentBtn, "Auswertung starten");
 
               if (progressData.status === "completed") {
                   const folderName = progressData.folder || document.getElementById('data-directory').value;
                   sedimentResultsContainer.style.display = 'block';
                   sedimentResultsContainer.innerText =
-                    `Data evaluation completed. Results were saved in folder "${folderName}".`;
+                    `Datenauswertung abgeschlossen. Die Ergebnisse wurden im Ordner „${folderName}“ gespeichert.`;
               } else {
                   sedimentResultsContainer.style.display = 'block';
                   sedimentResultsContainer.innerText =
-                    `Error during data evaluation: ${progressData.error || 'Unknown'}`;
+                    `Fehler bei der Datenauswertung: ${progressData.error || 'Unbekannt'}`;
               }
               if (abortSedimentBtn) abortSedimentBtn.style.display = 'none';
               currentSedimentId = null;
@@ -2783,21 +2764,22 @@ document.addEventListener('DOMContentLoaded', function() {
           })
           .catch(error => {
             clearInterval(sedimentInterval);
-            console.error("Error fetching data evaluation progress:", error);
+            console.error("Fehler beim Abrufen des Datenauswertungsfortschritt:", error);
             enableAllProcessButtons();
             document.querySelector('.progress-bar-container').style.display = 'none';
-            clearButtonRunning(sedimentBtn, "Start evaluation");
+            clearButtonRunning(sedimentBtn, "Auswertung starten");
           });
       }, 1000);
     })
     .catch(error => {
-      console.error("Error starting data evaluation", error);
+      console.error("Fehler beim Starten der Datenauswertung", error);
       enableAllProcessButtons();
       document.querySelector('.progress-bar-container').style.display = 'none';
-      clearButtonRunning(sedimentBtn, "Start evaluation");
+      clearButtonRunning(sedimentBtn, "Auswertung starten");
     });
   });
 
+  // Analyse starten
   const analyseForm = document.getElementById("analyse-form");
   analyseForm.addEventListener("submit", function(e) {
     e.preventDefault();
@@ -2810,13 +2792,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const analyseProgressText = document.getElementById("analyse-progress-text");
     const analyseSpinner = document.getElementById("analyse-spinner");
 
+    // UI-Start
     analyseProgressContainer.style.display = "block";
     analyseSpinner.style.display = "block";
     analyseProgressBar.value = 0;
-    analyseProgressText.innerText = "0% completed";
+    analyseProgressText.innerText = "0% abgeschlossen";
     analysisResultsContainer.style.display = 'none';
 
-    setButtonRunning(submitBtn, "Process running…");
+    setButtonRunning(submitBtn, "Prozess läuft…");
 
     const data = {
       pdf_directory: document.getElementById("pdf-directory").value,
@@ -2847,7 +2830,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(resp => resp.json())
         .then(progressData => {
           analyseProgressBar.value = progressData.percent || 0;
-          analyseProgressText.innerText = (progressData.percent || 0) + "% completed";
+          analyseProgressText.innerText = (progressData.percent || 0) + "% abgeschlossen";
           if (["completed","error","aborted"].includes(progressData.status)) {
               clearInterval(analysisInterval);
               analyseSpinner.style.display = "none";
@@ -2859,10 +2842,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 const folderName = progressData.folder 
                                     || document.getElementById("pdf-directory").value;
                 analysisResultsContainer.innerText =
-                    `Data analysis completed. Results were saved in folder "${folderName}".`;
+                    `Datenanalyse abgeschlossen. Die Ergebnisse wurden im Ordner „${folderName}“ gespeichert.`;
               } else {
                 analysisResultsContainer.innerText =
-                    `Error during data analysis: ${progressData.error || "Unknown"}`;
+                    `Fehler bei der Datenanalyse: ${progressData.error || "Unbekannt"}`;
               }
               resetAnalysisUI();
               currentAnalysisId = null;
@@ -2870,15 +2853,15 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .catch(error => {
           clearInterval(analysisInterval);
-          console.error("Error fetching analysis progress:", error);
+          console.error("Fehler beim Abrufen des Analysefortschritts:", error);
           enableAllProcessButtons();
           resetAnalysisUI();
         });
       }, 1000);
     })
     .catch(error => {
-      console.error("Error starting the analysis:", error);
-      alert("Error starting the analysis.");
+      console.error("Fehler beim Starten der Analyse:", error);
+      alert("Fehler beim Starten der Analyse.");
       enableAllProcessButtons();
       resetAnalysisUI();
     });
@@ -2887,7 +2870,7 @@ document.addEventListener('DOMContentLoaded', function() {
 """
 
 # ---------------------------
-# Flask endpoints
+# Flask-Endpunkte
 # ---------------------------
 @app.route("/")
 def index():
@@ -2913,14 +2896,14 @@ def download_papers():
     if not database or not query or not year or not num_papers:
         return jsonify(
             {
-                "error": "Please provide all parameters (database, search query, year, number)."
+                "error": "Bitte alle Parameter (Datenbank, Suchbegriffe, Jahr, Anzahl) angeben."
             }
         )
 
     with process_lock:
         if current_process.get("download"):
             return (
-                jsonify({"error": "A download process is already running."}),
+                jsonify({"error": "Ein Download-Prozess läuft bereits."}),
                 400,
             )
         current_process["download"] = True
@@ -2941,7 +2924,7 @@ def download_papers():
 def get_download_progress():
     download_id = request.args.get("id")
     if not download_id or download_id not in download_progress:
-        return jsonify({"error": "Invalid download ID."})
+        return jsonify({"error": "Ungültige Download-ID."})
     return jsonify(download_progress[download_id])
 
 @app.route("/abort_download", methods=["POST"])
@@ -2950,9 +2933,9 @@ def abort_download():
     download_id = data.get("download_id")
     if download_id in download_progress:
         download_progress[download_id]["abort"] = True
-        logging.info(f"[ABORT_DOWNLOAD] Abort flag set for download ID {download_id}.")
-        return jsonify({"message": "Abort of data acquisition requested"})
-    return jsonify({"error": "Invalid download ID"}), 400
+        logging.info(f"[ABORT_DOWNLOAD] Abbruch für Download-ID {download_id} gesetzt.")
+        return jsonify({"message": "Abbruch der Datenbeschaffung angefordert"})
+    return jsonify({"error": "Ungültige Download-ID"}), 400
 
 @app.route("/abort_analysis", methods=["POST"])
 def abort_analysis():
@@ -2960,9 +2943,9 @@ def abort_analysis():
     analysis_id = data.get("analysis_id")
     if analysis_id in analysis_progress:
         analysis_progress[analysis_id]["abort"] = True
-        logging.info(f"[ABORT_ANALYSIS] Abort flag set for {analysis_id}")
-        return jsonify({"message": "Abort of data analysis requested"})
-    return jsonify({"error": "Invalid analysis ID"}), 400
+        logging.info(f"[ABORT_ANALYSIS] abort gesetzt für {analysis_id}")
+        return jsonify({"message": "Abbruch der Datenanalyse angefordert"})
+    return jsonify({"error": "Ungültige Analysis-ID"}), 400
 
 @app.route("/abort_sediment", methods=["POST"])
 def abort_sediment():
@@ -2970,12 +2953,12 @@ def abort_sediment():
     analysis_id = data.get("analysis_id")
     if analysis_id in sediment_progress:
         sediment_progress[analysis_id]["abort"] = True
-        logging.info(f"[ABORT_SEDIMENT] Abort flag set for sediment ID {analysis_id}.")
+        logging.info(f"[ABORT_SEDIMENT] Abbruch für Sediment-ID {analysis_id} gesetzt.")
         with process_lock:
             if current_process.get("sediment"):
                 current_process["sediment"] = False
-        return jsonify({"message": "Abort of data evaluation requested"})
-    return jsonify({"error": "Invalid analysis ID"}), 400
+        return jsonify({"message": "Abbruch der Datenauswertung angefordert"})
+    return jsonify({"error": "Ungültige Analysis-ID"}), 400
 
 @app.route("/list_directories", methods=["GET"])
 def list_directories():
@@ -2995,14 +2978,14 @@ def start_analysis():
     pdf_directory = data.get("pdf_directory")
     questions = data.get("questions")
 
-    logging.info(f"[START_ANALYSIS] Request received: pdf_directory={pdf_directory}, questions={(questions or '')[:100]}")
+    logging.info(f"[START_ANALYSIS] Anfrage erhalten: pdf_directory={pdf_directory}, questions={(questions or '')[:100]}")
 
     if not pdf_directory or not questions:
-        return jsonify({"error": "Please provide both a PDF directory and questions."})
+        return jsonify({"error": "Bitte sowohl ein PDF-Verzeichnis als auch Fragen angeben."})
 
     with process_lock:
         if current_process.get("analysis"):
-            return (jsonify({"error": "An analysis process is already running."}), 400)
+            return (jsonify({"error": "Ein Analyse-Prozess läuft bereits."}), 400)
         current_process["analysis"] = True
 
     question_lines = [line.strip() for line in questions.splitlines() if line.strip()]
@@ -3010,20 +2993,20 @@ def start_analysis():
 
     if expected_count == 1:
         context_query = (
-            "Answer the following question solely based on the provided excerpt. "
-            "If the excerpt does not contain sufficient information OR no literal quote is possible, output exactly 'NO ANSWER!'. "
-            "Then output 'Citation:' with a short literal quote (max 20 words) from the excerpt.\n"
-            f"Question 1: {question_lines[0]}"
+            "Beantworte die folgende Frage ausschließlich auf Basis des bereitgestellten Abschnitts. "
+            "Wenn der Abschnitt keine ausreichenden Informationen enthält ODER kein wörtliches Zitat möglich ist, gib exakt 'KEINE ANTWORT!'. "
+            "Gib danach 'Beleg:' mit einem kurzen wörtlichen Zitat (max. 20 Wörter) aus dem Abschnitt an.\n"
+            f"Frage 1: {question_lines[0]}"
         )
     else:
         context_query = (
-            "Answer the following questions solely based on the provided excerpt. "
-            "For each question: exactly ONE sentence OR exactly 'NO ANSWER!'. "
-            "If no literal quote is possible, output 'NO ANSWER!'. "
-            "After each answer: 'Citation:' with a short literal quote (max 20 words) from the excerpt.\n"
+            "Beantworte die folgenden Fragen ausschließlich auf Basis des bereitgestellten Abschnitts. "
+            "Für jede Frage: genau EIN Satz ODER exakt 'KEINE ANTWORT!'. "
+            "Wenn kein wörtliches Zitat möglich ist, gib 'KEINE ANTWORT!'. "
+            "Nach jeder Antwort: 'Beleg:' mit einem kurzen wörtlichen Zitat (max. 20 Wörter) aus dem Abschnitt.\n"
         )
         for idx, q in enumerate(question_lines, start=1):
-            context_query += f"Question {idx}: {q}\n"
+            context_query += f"Frage {idx}: {q}\n"
 
     analysis_id = str(uuid.uuid4())
     analysis_progress[analysis_id] = {"status": "starting", "percent": 0}
@@ -3056,11 +3039,11 @@ def start_analysis():
 def get_analysis_progress():
     analysis_id = request.args.get("id")
     if not analysis_id or analysis_id not in analysis_progress:
-        return jsonify({"error": "Invalid analysis ID."})
+        return jsonify({"error": "Ungültige Analysis-ID."})
     return jsonify(analysis_progress[analysis_id])
 
 # ---------------------------
-# Start application
+# Anwendung starten
 # ---------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)

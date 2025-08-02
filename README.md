@@ -1,23 +1,23 @@
 ![](images/FACTS_Logo.png)
 
-# FACTS V2 APP
+# FACTS V2.5 APP
 ## Filtering and Analysis of Content in Textual Sources
 
 This repository, developed by Stefan Pietrusky, is based on the article published at Data Science Collective [[1]](https://medium.com/@stefanpietrusky/facts-v2-filtering-and-analysis-of-content-in-textual-sources-1a16cdac811b). In this article, I describe the functionality of an enhanced version (V2) of the FACTS application. The first version has already been tested and provided important results for improvement. The testing of the first version of FACTS provides concrete insights into the future of education in the age of AI [[2]](https://arxiv.org/abs/2412.07794). 
 
-The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are available at peDOCS and show that FACTS provides answers to the questions posed by the congress [[3]](https://www.pedocs.de/frontdoor.php?source_opus=33063). The current version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. This is an open source project for educational and research purposes.
+The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are available at peDOCS and show that FACTS provides answers to the questions posed by the congress [[3]](https://www.pedocs.de/frontdoor.php?source_opus=33063). The version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. 
 
-We are currently working on version 2.5, which will integrate Cytoscape and adapt the design.
+In the current version (V2.5), the search function for articles has been revised. Since the structure of ERIC has changed, a number of changes have been made here. The methods used by the other databases have also been adapted. The design has been modified and processes that have been started can now be terminated. In future, additional databases and new evaluation options are to be integrated. This is an open source project for educational and research purposes.
 
 ## FACTS Structure
-The illustration shows the functional principle of the FACTS (V1.5) app. Three separate Python scripts had to be executed for a complete run.
+The illustration shows the functional principle of the FACTS (V2.5) app. Three separate Python scripts had to be executed for a complete run.
 
-![FACTS V1.5 Structure and mode of operation (Image by author)](images/FACTSV2_APP_STRUCTURE.png)
+![FACTS V2.5 Structure and mode of operation (Image by author)](images/FACTSV2.5.svg)
 
 ## FACTS working principle
 Below is a short GIF showing the structure and function of the app.
 
-![FACTS V2 (Gif by author](images/FACTSV2_APP.gif)
+![FACTS V2.5 (Gif by author](images/FACTSV2.5.gif)
 
 ## FACTS availability
 The code to run the app is already in the repository.The code is available in both German (GER) and English.
