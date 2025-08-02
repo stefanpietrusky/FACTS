@@ -11,6 +11,7 @@ In the current version (V2.5), the search function for articles has been revised
 
 ## FACTS Structure
 The structure of the current [V2.5] FACTS app is shown below. 
+
 ![FACTS V2.5 Structure and mode of operation (SVG created with Mermaid)](images/FACTSV2.5.svg)
 
 ## FACTS working principle
