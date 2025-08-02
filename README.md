@@ -10,9 +10,8 @@ The adapted (V1.5) version of the application was successfully tested during the
 In the current version (V2.5), the search function for articles has been revised. Since the structure of ERIC has changed, a number of changes have been made here. The methods used by the other databases have also been adapted. The design has been modified and processes that have been started can now be terminated. In future, additional databases and new evaluation options are to be integrated. This is an open source project for educational and research purposes.
 
 ## FACTS Structure
-The illustration shows the functional principle of the FACTS (V2.5) app. Three separate Python scripts had to be executed for a complete run.
-
-![FACTS V2.5 Structure and mode of operation (Image by author)](images/FACTSV2.5.svg)
+The structure of the current [V2.5] FACTS app is shown below. 
+![FACTS V2.5 Structure and mode of operation (SVG created with Mermaid)](images/FACTSV2.5.svg)
 
 ## FACTS working principle
 Below is a short GIF showing the structure and function of the app.
