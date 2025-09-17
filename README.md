@@ -9,6 +9,8 @@ The adapted (V1.5) version of the application was successfully tested during the
 
 In the current version (V2.5), the search function for articles has been revised. Since the structure of ERIC has changed, a number of changes have been made here. The methods used by the other databases have also been adapted. The design has been modified and processes that have been started can now be terminated. In future, additional databases and new evaluation options are to be integrated. This is an open source project for educational and research purposes.
 
+> **⚠️ Work in Progress:** This prototyp is currently under active development. While I make it available for research purposes, please be aware that there will be some changes to the functional structure. I recognize that some current technical design decisions may not be optimal and are subject to revision. Researchers using this prototyp should expect potential updates and changes. I recommend checking back regularly for updates and versioning information.
+
 ## FACTS Structure
 The structure of the current [V2.5] FACTS app is shown below. 
 
