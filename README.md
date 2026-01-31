@@ -3,7 +3,7 @@
 # FACTS V2.5 APP
 ## Filtering and Analysis of Content in Textual Sources
 
-This repository, developed by Stefan Pietrusky, is based on the article published at Data Science Collective [[1]](https://medium.com/@stefanpietrusky/facts-v2-filtering-and-analysis-of-content-in-textual-sources-1a16cdac811b). In this article, I describe the functionality of an enhanced version (V2) of the FACTS application. The first version has already been tested and provided important results for improvement. The testing of the first version of FACTS provides concrete insights into the future of education in the age of AI [[2]](https://arxiv.org/abs/2412.07794). 
+Due to a submission for the Educational Data Mining Conference 2026, some information is currently not displayed. This repository, developed by ***, is based on the article published at Data Science Collective [[1]](https://medium.com/@stefanpietrusky/facts-v2-filtering-and-analysis-of-content-in-textual-sources-1a16cdac811b). In this article, I describe the functionality of an enhanced version (V2) of the FACTS application. The first version has already been tested and provided important results for improvement. The testing of the first version of FACTS provides concrete insights into the future of education in the age of AI [[2]](https://arxiv.org/abs/2412.07794). 
 
 The adapted (V1.5) version of the application was successfully tested during the 6th IGSP Congress. The results of this test are available at peDOCS and show that FACTS provides answers to the questions posed by the congress [[3]](https://www.pedocs.de/frontdoor.php?source_opus=33063). The version (V2) has been further improved and adapted so that the entire process can now be controlled via a common interface. 
 
@@ -45,8 +45,8 @@ ollama create llama3.1p -f PATH\modelfile.txt
 python app.py
 ```
 ## References
-[1] Pietrusky, S. (2025). How I automatically find numerous answers for any given question. FACTS V2: Filtering and Analysis of Content in Textual Sources. Data Science Collective. Data Science Collective
+[1] XXX, X. (2025). How I automatically find numerous answers for any given question. FACTS V2: Filtering and Analysis of Content in Textual Sources. Data Science Collective. Data Science Collective
 
-[2] Pietrusky, S. (2024). Automatic answering of scientific questions using the FACTS-V1 framework: New methods in research to increase efficiency through the use of generative AI. ARXIV CS.DL 
+[2] XXX, X. (2024). Automatic answering of scientific questions using the FACTS-V1 framework: New methods in research to increase efficiency through the use of generative AI. ARXIV CS.DL 
 
-[3] Pietrusky, S (2025). Changing school practice. Can artificial intelligence help provide answers to educational research questions? 6. IGSP Congress. peDOCS
+[3] XXX, X. (2025). Changing school practice. Can artificial intelligence help provide answers to educational research questions? 6. IGSP Congress. peDOCS
