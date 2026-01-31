@@ -1,8 +1,6 @@
 """
 title: FACTS V2.5 [FILTERING AND ANALYSIS OF CONTENT IN TEXTUAL SOURCES]
-author: stefanpietrusky
-author_url1: https://downchurch.studio/
-author_url2: https://urlz.fr/uj1I [CAEDHET/HCDH Heidelberg University]
+author: xxx
 version: 1.0
 """
 
@@ -3064,3 +3062,4 @@ def get_analysis_progress():
 # ---------------------------
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
+
