@@ -1,8 +1,0 @@
-FROM llama3.1
-
-PARAMETER temperature 0.1
-PARAMETER stop "<|start_header_id|>"
-PARAMETER stop "<|end_header_id|>"
-PARAMETER stop "<|eot_id|>"
-PARAMETER stop "<|reserved_special_token>"
-
