@@ -39,7 +39,6 @@ pip install -r requirements.txt
 6. Create the specific versions of the LLM models with the following command
 ```bash 
 ollama create llama3.1p -f PATH\modelfile.txt
-ollama create llama3.1p2 -f PATH\modelfile.txt
 ```
 7. Start the FACTS app:
 ```bash 
